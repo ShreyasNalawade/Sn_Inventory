@@ -1,0 +1,71 @@
+body {
+    background: linear-gradient(to bottom, #f3d7d7, #f7f1e3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: sans-serif;
+    color: #333;
+}
+.login-container {
+    text-align: center;
+    padding: 2rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+.app-icon {
+    width: 120px;
+    height: 120px;
+    background: #fff;
+    border-radius: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.pin-inputs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.pin-input {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #e0e0e0;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-size: 1.5rem;
+    color: #333;
+}
+.pin-input:focus {
+    outline: 2px solid #ff6347;
+}
+.form-control {
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+.btn-continue {
+    background-color: #ff6347;
+    border: none;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 30px;
+    font-size: 1.2rem;
+    width: 100%;
+    box-shadow: 0 4px 10px rgba(255, 99, 71, 0.4);
+}
+.forgot-pin {
+    color: #888;
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    display: block;
+}
