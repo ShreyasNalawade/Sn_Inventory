@@ -6,7 +6,7 @@
                 List</a>
         </li>
         <li class="nav-item">
-            <a class="sidebar-link" href="vashiMarketBill.html"><i class="fas fa-box-open me-2"></i> Vashi
+            <a class="sidebar-link" href="{{ route('vashi-market.index') }}"><i class="fas fa-box-open me-2"></i> Vashi
                 Market Bill
                 Details</a>
         </li>

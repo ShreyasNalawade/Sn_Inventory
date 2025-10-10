@@ -58,4 +58,42 @@ class ProductListController extends Controller
 
         return redirect()->route('admin.listofPrice')->with('success', 'Product added successfully!');
     }
+
+    /**
+     * Show the form for editing the specified product.
+     */
+    public function edit(Product $product)
+    {
+        return view('admin.addProduct', compact('product'));
+    }
+
+    /**
+     * Update the specified product in storage.
+     */
+    public function update(Request $request, Product $product)
+    {
+        $rules = [
+            'type_product' => 'required|string|in:grocery,oil,masala,other',
+            'name' => 'required|string|max:255',
+        ];
+
+        if ($request->input('type_product') === 'oil') {
+            $rules += [
+                'brand_name' => 'nullable|string|max:255',
+                'size_750ml' => 'nullable|numeric|min:0',
+                'size_1L' => 'nullable|numeric|min:0',
+                'size_5L' => 'nullable|numeric|min:0',
+                'size_15L_tin' => 'nullable|numeric|min:0',
+                'size_15L_jar' => 'nullable|numeric|min:0',
+            ];
+        } else {
+            $rules['purchase_price'] = 'required|numeric|min:0';
+        }
+
+        $validatedData = $request->validate($rules);
+
+        $product->update($validatedData);
+
+        return redirect()->route('admin.listofPrice')->with('success', 'Product updated successfully!');
+    }
 }

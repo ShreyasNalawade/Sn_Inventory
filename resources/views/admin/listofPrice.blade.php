@@ -113,7 +113,8 @@
                                             <td>₹ {{ $price500g }}</td>
                                             <td>₹ {{ $price1kg }}</td>
                                             <td>
-                                                <a href="#" class="btn btn-sm btn-warning">
+                                                <a href="{{ route('admin.product.edit', $product->id) }}"
+                                                    class="btn btn-sm btn-warning">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </a>
                                             </td>
@@ -137,12 +138,23 @@
 
                     @foreach ($oilProducts as $brand => $products)
                         <div class="card mb-3">
-                            <div class="card-header bg-transparent d-flex justify-content-between align-items-center"
-                                data-bs-toggle="collapse" href="#brand{{ Str::slug($brand) }}" role="button"
-                                aria-expanded="false" aria-controls="brand{{ Str::slug($brand) }}">
-                                <h5 class="mb-0">{{ $brand }} ({{ $products->first()->name }})</h5>
-                                <i class="fas fa-chevron-down"></i>
+                            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                                <div class="flex-grow-1" data-bs-toggle="collapse" href="#brand{{ Str::slug($brand) }}"
+                                    role="button" aria-expanded="false" aria-controls="brand{{ Str::slug($brand) }}"
+                                    style="cursor: pointer;">
+                                    <h5 class="mb-0">{{ $brand }} ({{ $products->first()->name }})</h5>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <a href="{{ route('admin.product.edit', $products->first()->id) }}"
+                                        class="btn btn-sm btn-warning me-2">
+                                        <i class="fas fa-edit"></i> <span class="d-none d-sm-inline">Edit</span>
+                                    </a>
+                                    <i class="fas fa-chevron-down" data-bs-toggle="collapse"
+                                        href="#brand{{ Str::slug($brand) }}" role="button" aria-expanded="false"
+                                        aria-controls="brand{{ Str::slug($brand) }}" style="cursor: pointer;"></i>
+                                </div>
                             </div>
+
 
                             <div class="collapse" id="brand{{ Str::slug($brand) }}">
                                 <div class="card-body">
@@ -226,6 +238,7 @@
                                     <th scope="col">50g</th>
                                     <th scope="col">250g</th>
                                     <th scope="col">1Kg</th>
+                                    <th>edit</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -252,6 +265,12 @@
                                             <td>₹ {{ $price50g }}</td>
                                             <td>₹ {{ $price250g }}</td>
                                             <td>₹ {{ $price1kg }}</td>
+                                            <td>
+                                                <a href="{{ route('admin.product.edit', $product->id) }}"
+                                                    class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                            </td>
                                         </tr>
                                     @endif
                                 @endforeach
@@ -274,6 +293,7 @@
                                     <th scope="col">Purchase Rate</th>
                                     <th scope="col">Name of Product</th>
                                     <th scope="col">Sale Amount (1Kg or 1 quantity)</th>
+                                    <th>edit</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -282,7 +302,12 @@
                                         <tr>
                                             <td>₹ {{ $product->purchase_price }}</td>
                                             <td><b>{{ $product->name }}</b></td>
-                                            <td>₹ {{ round($product->purchase_price * 1.25) }}</td>
+                                            <td>
+                                                <a href="{{ route('admin.product.edit', $product->id) }}"
+                                                    class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                            </td>
                                         </tr>
                                     @endif
                                 @endforeach

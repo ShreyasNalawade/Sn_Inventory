@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProductListController;
+use App\Http\Controllers\VashiMarketController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -25,6 +26,15 @@ Route::group(['middleware' => ['web']], function () {
 
     Route::get('/products/create', [ProductListController::class, 'create'])->name('admin.product.create');
     Route::post('/products', [ProductListController::class, 'store'])->name('admin.product.store');
+    Route::get('/products/{product}/edit', [ProductListController::class, 'edit'])->name('admin.product.edit');
+    Route::put('/products/{product}', [ProductListController::class, 'update'])->name('admin.product.update');
+    Route::get('/vashi-market/bills', [\App\Http\Controllers\VashiMarketController::class, 'index'])->name('vashi-market.index');
+    Route::get('/vashi-market/bills/create', [\App\Http\Controllers\VashiMarketController::class, 'create'])->name('vashi-market.create');
+    Route::post('/vashi-market/bills', [\App\Http\Controllers\VashiMarketController::class, 'store'])->name('vashi-market.store');
+    Route::get('vashi-market/{vashiMarketBill}/payment', [VashiMarketController::class, 'showPaymentForm'])->name('vashi-market.payment.form');
+    Route::get('vashi-market/details/{vashiMarketBill}', [VashiMarketController::class, 'showBillDetails'])->name('vashi-market.showBillDetails');
+
+
     // Route::post('/list/products', [ProductListController::class, 'oilAddProduct'])->name('admin.OilAddProduct'); // This will be replaced
 
 });
