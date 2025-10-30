@@ -302,6 +302,7 @@
                                         <tr>
                                             <td>₹ {{ $product->purchase_price }}</td>
                                             <td><b>{{ $product->name }}</b></td>
+                                            <td>₹ {{ $product->purchase_price }}</td>
                                             <td>
                                                 <a href="{{ route('admin.product.edit', $product->id) }}"
                                                     class="btn btn-sm btn-warning">

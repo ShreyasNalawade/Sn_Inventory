@@ -55,7 +55,8 @@
 
                 <div id="data-list" class="d-flex flex-column gap-3" style="max-height: 70vh; overflow-y: auto">
                     @foreach ($bills as $bill)
-                        <a href="{{ route('vashi-market.showBillDetails', $bill->id) }}" class="data-card-link">
+                        <a href="{{ route('vashi-market.showBillDetails', $bill->id) }}"
+                            class="data-card-link text-decoration-none">
                             <div class="card data-card">
                                 <div class="card-body">
                                     {{-- The content inside the card remains the same --}}

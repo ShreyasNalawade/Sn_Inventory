@@ -120,6 +120,70 @@ class VashiMarketController extends Controller
     {
         // return view('admin.payment', ['bill' => $vashiMarketBill]);
     }
+
+
+    public function editVashiBill($id)
+    {
+        $bill = VashiMarketBill::with('products')->findOrFail($id);
+        return view('admin.editVashiBill', compact('bill'));
+    }
+    public function updateVashiBill(Request $request, $id)
+    {
+        $bill = VashiMarketBill::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'bill_date' => 'required|date',
+            'received_date' => 'required|date',
+            'party_name' => 'required|string|max:255',
+            'dalal' => 'required|string|max:255',
+            'transport_name' => 'required|string|max:255',
+            'total_bill_amount' => 'required|numeric',
+            'is_paid' => 'sometimes|boolean',
+            'payment_type' => 'nullable|string',
+            'transaction_id' => 'nullable|string',
+            'cheque_no' => 'nullable|string',
+            'receipt_no' => 'nullable|string',
+            'paid_date' => 'nullable|date',
+            'paid_amount' => 'nullable|numeric',
+            'products' => 'required|array',
+            'products.*.product_name' => 'required|string',
+            'products.*.brand_name' => 'nullable|string',
+            'products.*.num_bags' => 'required|integer',
+            'products.*.bag_size' => 'required|numeric',
+            'products.*.total_kg' => 'required|numeric',
+            'products.*.rate' => 'required|numeric',
+            'products.*.product_amount' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        DB::transaction(function () use ($bill, $request) {
+            $bill->update($request->only([
+                'bill_date',
+                'received_date',
+                'party_name',
+                'dalal',
+                'transport_name',
+                'total_bill_amount',
+                'payment_type',
+                'transaction_id',
+                'cheque_no',
+                'receipt_no',
+                'paid_date',
+                'paid_amount'
+            ]) + ['is_paid' => $request->has('is_paid')]);
+
+            $bill->products()->delete(); // Remove old
+            foreach ($request->products as $product) {
+                $bill->products()->create($product);
+            }
+        });
+
+        return redirect()->route('vashi-market.showBillDetails', $bill->id)->with('success', 'Bill updated successfully.');
+    }
+
     public function showBillDetails(VashiMarketBill $vashiMarketBill)
     {
         // Eager load the products for the specific bill

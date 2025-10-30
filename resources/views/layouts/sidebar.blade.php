@@ -2,7 +2,8 @@
     <h5 class="fw-bold mb-3">Navigation</h5>
     <ul class="nav flex-column">
         <li class="nav-item">
-            <a class="sidebar-link active" href="#"><i class="fa-solid fa-file-contract me-2"></i> Price
+            <a class="sidebar-link" href="{{ route('admin.listofPrice') }}"><i
+                    class="fa-solid fa-file-contract me-2"></i> Price
                 List</a>
         </li>
         <li class="nav-item">

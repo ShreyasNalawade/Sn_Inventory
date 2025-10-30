@@ -71,6 +71,21 @@
             box-shadow: 0 4px 10px rgba(255, 99, 71, 0.4);
         }
     </style>
+    <style>
+        #pageLoader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+    </style>
+
 @endsection
 
 @section('content')
@@ -98,6 +113,20 @@
                     </div>
                 @endif
 
+                {{-- Display Success Message --}}
+                @if (session('success'))
+                    <div class="alert alert-success">
+                        {{ session('success') }}
+                    </div>
+                @endif
+
+                {{-- Display Error Message --}}
+                @if (session('error'))
+                    <div class="alert alert-danger">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 <form id="bill-form" action="{{ route('vashi-market.store') }}" method="POST"> {{-- Example route
                     --}}
                     @csrf
@@ -122,23 +151,12 @@
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="dalal" class="form-label">Dalal</label>
-                                <select class="form-select" id="dalal" name="dalal" required>
-                                    <option value="">Select Dalal</option>
-                                    <option value="S.V.B">S.V.B</option>
-                                    <option value="B.N. Enterprises">B.N. Enterprises</option>
-                                    <option value="J.K. Services">J.K. Services</option>
-                                    <option value="A.R. Broker">A.R. Broker</option>
-                                    <option value="Dalal & Co.">Dalal & Co.</option>
-                                </select>
+                                <input type="text" class="form-control" id="dalal" name="dalal" required />
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="transport-name" class="form-label">Transport Name</label>
-                                <select class="form-select" id="transport-name" name="transport_name" required>
-                                    <option value="">Select Transport</option>
-                                    <option value="Prakash Roadways">Prakash Roadways</option>
-                                    <option value="Mahadev Transport">Mahadev Transport</option>
-                                    <option value="New Balaji Transport">New Balaji Transport</option>
-                                </select>
+                                <input type="text" class="form-control" id="transport-name" name="transport_name"
+                                    required />
                             </div>
                         </div>
                     </div>
@@ -146,8 +164,10 @@
                     <div class="form-section">
                         <div class="d-flex justify-content-between align-items-center">
                             <h4>Product Details</h4>
-                            <button type="button" class="btn btn-primary btn-sm" id="add-product-btn">
-                                <i class="fas fa-plus me-1"></i> Add Product
+                            <button type="button" class="btn btn-primary btn-sm" id="add-product-btn"
+                                style="min-width: 130px;">
+                                <i class="fas fa-plus me-1"></i> Add Product <span id="product-count-badge"
+                                    class="badge bg-light text-dark ms-1"></span>
                             </button>
                         </div>
                         <div id="product-container" class="mt-3"></div>
@@ -159,7 +179,7 @@
                             <div class="col-md-6 col-lg-4">
                                 <label for="total-bill-amount" class="form-label">Total Bill Amount</label>
                                 <input type="number" class="form-control" id="total-bill-amount" name="total_bill_amount"
-                                    step="0.01" required readonly />
+                                    step="0.001" required />
                             </div>
                         </div>
                     </div>
@@ -206,9 +226,13 @@
                     </div>
 
                     <div class="mt-4 d-flex justify-content-center">
-                        <button type="submit" class="btn btn-continue col-12 col-md-6">
-                            Save
+                        <button type="submit" id="saveBillBtn"
+                            class="btn btn-continue bg-primary text-white col-12 col-md-6 position-relative">
+                            <span id="saveBtnText"><i class="fas fa-save me-1"></i> Save</span>
+                            <span id="saveBtnLoader" class="spinner-border spinner-border-sm text-light ms-2 d-none"
+                                role="status"></span>
                         </button>
+
                     </div>
                 </form>
             </div>
@@ -241,8 +265,7 @@
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <label class="form-label">Total Kg</label>
-                    <input type="number" class="form-control total-kg" name="products[][total_kg]" step="0.01" value="0.00"
-                        readonly required />
+                    <input type="number" class="form-control total-kg" name="products[][total_kg]" step="0.01" required />
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <label class="form-label">Rate</label>
@@ -251,11 +274,19 @@
                 <div class="col-md-6 col-lg-4">
                     <label class="form-label">Total Amount of Product</label>
                     <input type="number" class="form-control product-amount" name="products[][product_amount]" step="0.01"
-                        value="0.00" readonly required />
+                        value="0.00" required />
                 </div>
             </div>
         </div>
     </template>
+
+    <!-- Full Page Loader -->
+    <div id="pageLoader" style="display:none;">
+        <div class="spinner-border text-primary" style="width:3rem; height:3rem;" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
 @endsection
 
 @section('scripts')
@@ -275,6 +306,10 @@
             const productContainer = document.getElementById("product-container");
             const productTemplate = document.getElementById("product-template");
             const totalBillAmountInput = document.getElementById('total-bill-amount');
+            const productCountBadge = document.getElementById('product-count-badge');
+
+            // Set initial state for payment section
+            paymentDetailsSection.style.display = paidSwitch.checked ? "block" : "none";
 
             // Toggle payment details section
             paidSwitch.addEventListener("change", () => {
@@ -303,14 +338,7 @@
                         input.name = input.name.replace(/products\[\d*\]/, `products[${index}]`);
                     });
                 });
-            };
-
-            const updateTotalBill = () => {
-                let total = 0;
-                document.querySelectorAll('.product-amount').forEach(input => {
-                    total += parseFloat(input.value) || 0;
-                });
-                totalBillAmountInput.value = total.toFixed(2);
+                productCountBadge.textContent = productItems.length;
             };
 
             // Add a new product section
@@ -323,34 +351,27 @@
                 const productRateInput = productItem.querySelector(".product-rate");
                 const productAmountInput = productItem.querySelector(".product-amount");
 
-                const calculateTotals = () => {
-                    const numBags = parseFloat(numBagsInput.value) || 0;
-                    const bagSize = parseFloat(bagSizeInput.value) || 0;
+                const calculateProductAmount = () => {
+                    const totalKg = parseFloat(totalKgInput.value) || 0;
                     const rate = parseFloat(productRateInput.value) || 0;
-
-                    const totalKg = numBags * bagSize;
-                    totalKgInput.value = totalKg.toFixed(2);
 
                     const productAmount = totalKg * rate;
                     productAmountInput.value = productAmount.toFixed(2);
-                    updateTotalBill(); // Update the main total whenever a product total changes
                 };
 
-                numBagsInput.addEventListener("input", calculateTotals);
-                bagSizeInput.addEventListener("input", calculateTotals);
-                productRateInput.addEventListener("input", calculateTotals);
+                // When a user edits total kg or rate, calculate the product amount.
+                totalKgInput.addEventListener("input", calculateProductAmount);
+                productRateInput.addEventListener("input", calculateProductAmount);
 
                 productItem
                     .querySelector(".delete-btn")
                     .addEventListener("click", () => {
                         productItem.remove();
                         renumberProducts();
-                        updateTotalBill();
                     });
 
                 productContainer.appendChild(productItem);
                 renumberProducts();
-                updateTotalBill();
             };
 
             addProductBtn.addEventListener("click", addProduct);
@@ -371,10 +392,24 @@
                     confirmButtonText: 'Yes, save it!'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // If confirmed, submit the form programmatically
+                        const btn = document.getElementById('saveBillBtn');
+                        const btnText = document.getElementById('saveBtnText');
+                        const btnLoader = document.getElementById('saveBtnLoader');
+                        const pageLoader = document.getElementById('pageLoader');
+
+                        // Disable button and show spinner
+                        btn.disabled = true;
+                        btnText.textContent = 'Saving...';
+                        btnLoader.classList.remove('d-none');
+
+                        // Show full-page loader
+                        pageLoader.style.display = 'flex';
+
+                        // Now submit the form
                         billForm.submit();
                     }
                 });
+
             });
 
             // Add one product section on initial load
