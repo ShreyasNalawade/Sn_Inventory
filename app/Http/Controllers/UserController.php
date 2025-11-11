@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -12,6 +13,11 @@ class UserController extends Controller
     //
     public function showLoginForm()
     {
+        // If user is already authenticated, redirect to product list
+        if (Auth::check()) {
+            return redirect()->route('admin.listofPrice');
+        }
+
         return view('admin.login');
     }
 
@@ -54,8 +60,18 @@ class UserController extends Controller
 
         if ($user) {
             if ($user->pin == $pins) {
-                $request->session()->put('user', $user);
-                return redirect()->route('admin.listofPrice');
+                // $request->session()->put('user', $user);
+                // $request->session()->put('last_login_time', now());
+                // $request->session()->save();
+                // return redirect()->route('admin.listofPrice');
+                // 4. Log the user in using Laravel's Auth system
+                Auth::login($user);
+
+                // 5. Regenerate the session to prevent security issues
+                $request->session()->regenerate();
+
+                // 6. Redirect to the protected area
+                return redirect()->intended(route('admin.listofPrice'));
             } else {
                 return back()->withErrors([
                     'pin' => 'Incorrect PIN.',
@@ -67,6 +83,21 @@ class UserController extends Controller
             ])->withInput();
         }
 
+    }
+
+    public function logout(Request $request)
+    {
+        // Logout the user
+        Auth::logout();
+
+        // Invalidate the session
+        $request->session()->invalidate();
+
+        // Regenerate CSRF token
+        $request->session()->regenerateToken();
+
+        // Redirect to login page
+        return redirect()->route('login.form')->with('success', 'You have been logged out successfully.');
     }
 
 }

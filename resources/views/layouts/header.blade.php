@@ -26,7 +26,7 @@
                         <hr class="dropdown-divider" />
                     </li>
                     <li>
-                        <a class="dropdown-item" href="#" id="logout-btn"><i
+                        <a class="dropdown-item" href="{{ route('logout') }}" id="logout-btn"><i
                                 class="fas fa-sign-out-alt me-2"></i>Logout</a>
                     </li>
                 </ul>

@@ -93,10 +93,14 @@
 </head>
 
 <body>
+
     <div class="login-container">
         <div class="app-icon mx-auto">
             <img src="/assets/icon/SN-logo.png" alt="App Icon" class="img-fluid" style="border-radius: 20px" />
         </div>
+        @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
 
         <form id="pin-form" action="{{ route('login.store') }}" method="POST">
             @csrf
@@ -116,11 +120,11 @@
             <input type="hidden" name="pin" id="hiddenPin" />
 
             @if ($errors->any())
-                <div class="alert alert-danger mt-3 p-2 text-center">
-                    @foreach ($errors->all() as $error)
-                        {{ $error }}<br>
-                    @endforeach
-                </div>
+            <div class="alert alert-danger mt-3 p-2 text-center">
+                @foreach ($errors->all() as $error)
+                {{ $error }}<br>
+                @endforeach
+            </div>
             @endif
 
             <button type="submit" class="btn btn-continue mt-4">Continue</button>
