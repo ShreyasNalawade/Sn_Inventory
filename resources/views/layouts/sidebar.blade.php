@@ -12,6 +12,10 @@
                 Details</a>
         </li>
         <li class="nav-item">
+            <a class="sidebar-link" href="{{ route('ai.invoice.upload') }}"><i class="fas fa-file-invoice me-2"></i>
+                Upload Invoice (AI)</a>
+        </li>
+        <li class="nav-item">
             <a class="sidebar-link" href="#"><i class="fas fa-users me-2"></i> Oil Bill Details</a>
         </li>
         <li class="nav-item">

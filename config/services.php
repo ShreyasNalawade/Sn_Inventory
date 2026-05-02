@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'ai_invoice' => [
+        'ocr_url' => env('OCR_SERVICE_URL', 'http://127.0.0.1:5000'),
+        'ollama_url' => env('OLLAMA_URL', 'http://127.0.0.1:11434/api/generate'),
+        'ollama_model' => env('OLLAMA_MODEL', 'llama3'),
+        // OCR + Ollama HTTP timeouts can exceed PHP's default max_execution_time (60).
+        'max_execution_seconds' => (int) env('AI_INVOICE_MAX_EXECUTION', 360),
+    ],
+
 ];

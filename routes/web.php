@@ -53,9 +53,7 @@ Route::middleware(['auth'])->group(function () {
 
 
     Route::get('/ai/invoice', [AIInvoiceController::class, 'index'])->name('ai.invoice.upload');
-
-    Route::post('/ai/invoice/process', [AIInvoiceController::class, 'process']);
-
-    Route::post('/ai/invoice/save', [AIInvoiceController::class, 'save']);
+    Route::post('/ai/invoice/process', [AIInvoiceController::class, 'process'])->name('ai.invoice.process');
+    Route::post('/ai/invoice/save', [AIInvoiceController::class, 'save'])->name('ai.invoice.save');
 
 });
