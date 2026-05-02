@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AIInvoiceController;
 use App\Http\Controllers\ProductListController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VashiMarketController;
@@ -45,5 +46,16 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/vashi-market/{id}', [VashiMarketController::class, 'updateVashiBill'])->name('vashi-market.update');
     Route::get('vashi-market/{vashiMarketBill}/payment', [VashiMarketController::class, 'showPaymentForm'])->name('vashi-market.payment.form');
     Route::get('vashi-market/details/{vashiMarketBill}', [VashiMarketController::class, 'showBillDetails'])->name('vashi-market.showBillDetails');
+
+
+
+
+
+
+    Route::get('/ai/invoice', [AIInvoiceController::class, 'index'])->name('ai.invoice.upload');
+
+    Route::post('/ai/invoice/process', [AIInvoiceController::class, 'process']);
+
+    Route::post('/ai/invoice/save', [AIInvoiceController::class, 'save']);
 
 });
