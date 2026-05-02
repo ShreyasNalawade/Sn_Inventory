@@ -149,6 +149,7 @@ class AIInvoiceController extends Controller
             'total' => 'nullable|numeric',
             'items' => 'required|array|min:1',
             'items.*.name' => 'required|string|max:255',
+            'items.*.brand' => 'nullable|string|max:255',
             'items.*.bags' => 'nullable|numeric',
             'items.*.quantity' => 'nullable|numeric',
             'items.*.rate' => 'nullable|numeric',
@@ -197,7 +198,7 @@ class AIInvoiceController extends Controller
                 VashiMarketBillProduct::create([
                     'vashi_market_bill_id' => $bill->id,
                     'product_name' => $item['name'],
-                    'brand_name' => null,
+                    'brand_name' => isset($item['brand']) && $item['brand'] !== '' ? $item['brand'] : null,
                     'num_bags' => $bags,
                     'bag_size' => $bagSize,
                     'total_kg' => $kg,
@@ -224,36 +225,59 @@ class AIInvoiceController extends Controller
 
     private function buildLlamaPrompt(string $ocrText): string
     {
-        return <<<'PROMPT'
-Return ONLY valid JSON in this format:
+        $buyers = config('services.ai_invoice.buyer_aliases', []);
+        $buyerBlock = $buyers === []
+            ? 'Sandip Oil Depo / Sandeep Oil Depo (and similar spellings)'
+            : implode(' | ', $buyers);
 
+        return <<<PROMPT
+You extract data from noisy OCR of Indian trade bills (APMC, rice/grain merchants, etc.).
+Return ONLY valid JSON. No markdown, no explanation.
+
+Schema (match these keys exactly):
 {
-"party_name": "",
-"bill_no": "",
-"date": "",
-"items": [
-{
-"name": "",
-"bags": 0,
-"quantity": 0,
-"rate": 0,
-"amount": 0
-}
-],
-"total": 0
+  "party_name": "",
+  "bill_no": "",
+  "date": "",
+  "items": [
+    {
+      "name": "",
+      "brand": "",
+      "bags": 0,
+      "quantity": 0,
+      "rate": 0,
+      "amount": 0
+    }
+  ],
+  "total": 0
 }
 
-Rules:
+=== party_name (CRITICAL) ===
+- "party_name" MUST be the SELLER / SUPPLIER / ISSUER of the bill — the company whose letterhead or legal name appears at the TOP as the issuer (e.g. "RAJNI TRADING CO.", "Rani Trading Co.").
+- It MUST NOT be the CUSTOMER / CONSIGNEE / BUYER (often labeled Party Name, M/s, Bill To, Sold To, Delivered To, or in a box below the header).
+- NEVER set party_name to our shop (the buyer). These names are FORBIDDEN for party_name: {$buyerBlock}
+- If OCR shows both issuer and customer, always pick the issuer for party_name.
 
-* quantity = weight in KG
-* bags = number of bags
-* Extract multiple products properly
-* If field missing, return empty or 0
-* Do NOT return explanation
+=== bill_no, date, total ===
+- bill_no: invoice / bill number (e.g. 25001), not old "previous dues" bill numbers unless clearly the main invoice number.
+- date: invoice date as on the bill (keep format from OCR if unclear, else DD/MM/YY or YYYY-MM-DD).
+- total: final payable "Net Bill" / grand total (include APMC/fees only if that is the printed net total). Prefer the bottom net figure over line subtotal if both exist.
+
+=== items[] (one object per product ROW — do not merge or swap rows) ===
+- bags: integer count of bags for that line.
+- quantity: TOTAL net weight for that line in KILOGRAMS (use "Net Wt", "Net Weight", "Qty KG" — NOT bag size alone). Example: 6 bags × 30 kg bag = 180 → quantity 180.
+- amount: line total amount in rupees for that row (must match the Amount column for that row, not another row).
+- rate: RUPEES PER KILOGRAM for that line. Compute as rate = amount / quantity when quantity > 0.
+  If the bill only shows "Rate/Qtl" or per quintal (100 kg), convert: rate_per_kg = rate_qtl / 100, then you may set amount consistent with quantity * rate_per_kg.
+  Never put the per-quintal number into "rate" without dividing by 100.
+- brand: trade/brand prefix from the item description (e.g. "SUDHA-RAS", "SILVER S") before the commodity name. If only one word, brand can be empty and put full text in name.
+- name: product / commodity description WITHOUT repeating the brand if split (e.g. "WHEAT LOKVAN 30 KG" or "WHEAT LOKVAN"). Drop decorative asterisks.
+
+Sanity: For each item, quantity and amount must correspond to the same table row; bags * typical bag size should be near quantity when bag size is printed.
 
 OCR TEXT:
-PROMPT
-            ."\n".$ocrText;
+{$ocrText}
+PROMPT;
     }
 
     private function parseLlamaJson(string $raw): ?array
@@ -291,18 +315,30 @@ PROMPT
             if (! is_array($row)) {
                 continue;
             }
+            $qty = (float) ($row['quantity'] ?? 0);
+            $amt = (float) ($row['amount'] ?? 0);
+            $rate = (float) ($row['rate'] ?? 0);
+            if ($qty > 0 && $amt > 0) {
+                $rate = round($amt / $qty, 4);
+            }
+            $brand = trim((string) ($row['brand'] ?? ''));
+            if ($brand === '' && isset($row['brand_name'])) {
+                $brand = trim((string) $row['brand_name']);
+            }
             $items[] = [
                 'name' => (string) ($row['name'] ?? ''),
+                'brand' => $brand,
                 'bags' => (float) ($row['bags'] ?? 0),
-                'quantity' => (float) ($row['quantity'] ?? 0),
-                'rate' => (float) ($row['rate'] ?? 0),
-                'amount' => (float) ($row['amount'] ?? 0),
+                'quantity' => $qty,
+                'rate' => $rate,
+                'amount' => $amt,
             ];
         }
 
         if ($items === []) {
             $items[] = [
                 'name' => '',
+                'brand' => '',
                 'bags' => 0,
                 'quantity' => 0,
                 'rate' => 0,
@@ -310,12 +346,37 @@ PROMPT
             ];
         }
 
+        $party = trim((string) ($data['party_name'] ?? ''));
+        $party = $this->stripBuyerFromPartyName($party);
+
         return [
-            'party_name' => (string) ($data['party_name'] ?? ''),
+            'party_name' => $party,
             'bill_no' => (string) ($data['bill_no'] ?? ''),
             'date' => (string) ($data['date'] ?? ''),
             'items' => $items,
             'total' => (float) ($data['total'] ?? 0),
         ];
+    }
+
+    /**
+     * If the model still returns our buyer as party_name, clear it so the user must pick the seller.
+     */
+    private function stripBuyerFromPartyName(string $party): string
+    {
+        if ($party === '') {
+            return '';
+        }
+        $normalized = mb_strtolower(preg_replace('/\s+/u', ' ', $party));
+        foreach (config('services.ai_invoice.buyer_aliases', []) as $alias) {
+            $a = mb_strtolower(trim(preg_replace('/\s+/u', ' ', $alias)));
+            if ($a === '' || mb_strlen($a) < 4) {
+                continue;
+            }
+            if (str_contains($normalized, $a) || str_contains($a, $normalized)) {
+                return '';
+            }
+        }
+
+        return $party;
     }
 }

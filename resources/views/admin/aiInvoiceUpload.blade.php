@@ -33,8 +33,8 @@
                     <h5 class="mb-3">Review &amp; edit</h5>
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
-                            <label class="form-label">Party name</label>
-                            <input type="text" class="form-control" id="fieldParty">
+                            <label class="form-label">Party name <span class="text-muted small">(seller who issued the bill)</span></label>
+                            <input type="text" class="form-control" id="fieldParty" placeholder="e.g. supplier / letterhead name, not your shop">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Bill no.</label>
@@ -63,10 +63,11 @@
                         <table class="table table-bordered align-middle" id="itemsTable">
                             <thead class="table-light">
                                 <tr>
+                                    <th style="min-width: 120px;">Brand</th>
                                     <th>Product name</th>
                                     <th style="width: 90px;">Bags</th>
                                     <th style="width: 110px;">Qty (kg)</th>
-                                    <th style="width: 100px;">Rate</th>
+                                    <th style="width: 100px;">Rate/kg</th>
                                     <th style="width: 110px;">Amount</th>
                                     <th style="width: 56px;"></th>
                                 </tr>
@@ -105,6 +106,7 @@
         }
 
         function itemRowHtml(item, index) {
+            const brand = item?.brand ?? '';
             const name = item?.name ?? '';
             const bags = item?.bags ?? '';
             const qty = item?.quantity ?? '';
@@ -112,6 +114,7 @@
             const amount = item?.amount ?? '';
             return `
             <tr data-row-index="${index}">
+                <td><input type="text" class="form-control form-control-sm item-brand" value="${escapeAttr(brand)}" placeholder="Brand"></td>
                 <td><input type="text" class="form-control form-control-sm item-name" value="${escapeAttr(name)}"></td>
                 <td><input type="number" step="1" class="form-control form-control-sm item-bags" value="${escapeAttr(bags)}"></td>
                 <td><input type="number" step="0.01" class="form-control form-control-sm item-qty" value="${escapeAttr(qty)}"></td>
@@ -139,6 +142,7 @@
                     btn.closest('tr').remove();
                     if (!itemsBody.querySelector('tr')) {
                         renderItems([{
+                            brand: '',
                             name: '',
                             bags: 0,
                             quantity: 0,
@@ -155,6 +159,7 @@
             const items = [];
             rows.forEach(tr => {
                 items.push({
+                    brand: tr.querySelector('.item-brand').value.trim(),
                     name: tr.querySelector('.item-name').value.trim(),
                     bags: parseFloat(tr.querySelector('.item-bags').value) || 0,
                     quantity: parseFloat(tr.querySelector('.item-qty').value) || 0,

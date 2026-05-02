@@ -41,6 +41,11 @@ return [
         'ollama_model' => env('OLLAMA_MODEL', 'llama3'),
         // OCR + Ollama HTTP timeouts can exceed PHP's default max_execution_time (60).
         'max_execution_seconds' => (int) env('AI_INVOICE_MAX_EXECUTION', 360),
+        // Our business (buyer). Never use these as party_name — that field is the seller who issued the bill.
+        'buyer_aliases' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'AI_INVOICE_BUYER_ALIASES',
+            'Sandip Oil Depo,Sandeep Oil Depo,SANDIP OIL DEPO,SANDEEP OIL DEPO,M/s SANDEEP OIL DEPO,M/s SANDIP OIL DEPO,Sandip Oil Depo General Store'
+        ))))),
     ],
 
 ];
