@@ -5,6 +5,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column; /* Stack header and page-wrapper vertically */
+    overflow-x: hidden;
 }
 
 /* --- Header Styling --- */
@@ -32,20 +33,26 @@ body {
     display: flex;
     flex-grow: 1;
     overflow: hidden; /* Important for controlling scroll */
+    min-width: 0;
+    min-height: calc(100vh - 56px);
+    height: calc(100vh - 56px);
 }
 
 /* --- Sidebar Styling --- */
 .sidebar {
-    width: 250px;
-    background: rgba(255, 255, 255, 0.5);
+    width: 268px;
+    max-width: 86vw;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.72);
     backdrop-filter: blur(10px);
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-    padding: 1rem;
+    box-shadow: 2px 0 18px rgba(15, 23, 42, 0.08);
+    padding: 1.25rem 0.875rem;
     position: fixed; /* For mobile overlay */
     top: 56px;
     bottom: 0;
     left: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     transition: transform 0.3s ease-in-out;
     z-index: 1040;
     transform: translateX(-100%); /* Initially hidden */
@@ -67,6 +74,41 @@ body {
 .sidebar.show + .sidebar-overlay {
     display: block;
 }
+
+.sidebar-inner {
+    min-height: 100%;
+}
+
+.sidebar-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.25rem 0.8rem 0.85rem;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.sidebar-heading i {
+    color: #ff6347;
+    font-size: 0.9rem;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar-nav .nav-item {
+    min-width: 0;
+}
+
 @media (min-width: 992px) {
     .navbar {
         position: sticky;
@@ -77,8 +119,10 @@ body {
     .sidebar {
         position: static; /* Revert from fixed for desktop layout */
         transform: translateX(0); /* Always visible on desktop */
-        width: 250px;
+        width: 268px;
+        max-width: 268px;
         flex-shrink: 0;
+        align-self: flex-start;
         box-shadow: none;
         background: rgba(255, 255, 255, 0.5);
         height: calc(
@@ -86,33 +130,80 @@ body {
         ); /* Full height minus header, for sticky content */
         position: sticky; /* Stick to the top of the page-wrapper */
         top: 56px; /* Align below the main navbar */
+        z-index: 1010;
     }
 
     .d-lg-none {
         display: none !important;
     } /* Ensure mobile-only elements are hidden */
 }
+
+@media (max-width: 575.98px) {
+    .sidebar {
+        width: min(290px, 86vw);
+        padding: 1rem 0.75rem;
+    }
+
+    .sidebar-heading {
+        padding-left: 0.7rem;
+    }
+}
+
 .sidebar-link {
-    display: block;
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-    color: #333;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 46px;
+    padding: 0.75rem 0.8rem;
+    color: #334155;
+    font-size: 0.92rem;
+    font-weight: 500;
     text-decoration: none;
-    border-radius: 10px;
-    transition: background-color 0.2s;
+    border-radius: 12px;
+    transition: background-color 0.2s, color 0.2s, transform 0.2s;
 }
+
+.sidebar-link i {
+    flex: 0 0 1.25rem;
+    width: 1.25rem;
+    padding-top: 0.1rem;
+    color: #64748b;
+    text-align: center;
+}
+
+.sidebar-link-label {
+    min-width: 0;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
 .sidebar-link:hover {
-    background-color: rgba(255, 99, 71, 0.2);
+    color: #e84f36;
+    background-color: rgba(255, 99, 71, 0.12);
+    transform: translateX(2px);
 }
+
+.sidebar-link:hover i {
+    color: #e84f36;
+}
+
 .sidebar-link.active {
-    background-color: #ff6347;
+    background: linear-gradient(135deg, #ff6347, #f77b61);
     color: white;
     font-weight: bold;
+    box-shadow: 0 6px 14px rgba(255, 99, 71, 0.22);
+}
+
+.sidebar-link.active i {
+    color: white;
 }
 
 /* --- Main Container Styling --- */
 .main-content {
     flex-grow: 1; /* Take remaining width */
+    min-width: 0;
     overflow-y: auto; /* Allow only main content to scroll */
 }
 .page-content {

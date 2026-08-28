@@ -1,25 +1,43 @@
-<div class="d-flex flex-column h-100">
-    <h5 class="fw-bold mb-3">Navigation</h5>
-    <ul class="nav flex-column">
+<div class="sidebar-inner">
+    <div class="sidebar-heading">
+        <i class="fas fa-compass" aria-hidden="true"></i>
+        <span>Navigation</span>
+    </div>
+
+    <ul class="sidebar-nav">
         <li class="nav-item">
-            <a class="sidebar-link" href="{{ route('admin.listofPrice') }}"><i
-                    class="fa-solid fa-file-contract me-2"></i> Price
-                List</a>
+            <a class="sidebar-link {{ request()->routeIs('admin.listofPrice') ? 'active' : '' }}"
+                href="{{ route('admin.listofPrice') }}"
+                @if (request()->routeIs('admin.listofPrice')) aria-current="page" @endif>
+                <i class="fa-solid fa-file-contract" aria-hidden="true"></i>
+                <span class="sidebar-link-label">Price List</span>
+            </a>
         </li>
         <li class="nav-item">
-            <a class="sidebar-link" href="{{ route('vashi-market.index') }}"><i class="fas fa-box-open me-2"></i> Vashi
-                Market Bill
-                Details</a>
+            <a class="sidebar-link {{ request()->routeIs('vashi-market.*') ? 'active' : '' }}"
+                href="{{ route('vashi-market.index') }}"
+                @if (request()->routeIs('vashi-market.*')) aria-current="page" @endif>
+                <i class="fas fa-box-open" aria-hidden="true"></i>
+                <span class="sidebar-link-label">Vashi Market Bill Details</span>
+            </a>
         </li>
         <li class="nav-item">
-            <a class="sidebar-link" href="#"><i class="fas fa-users me-2"></i> Oil Bill Details</a>
+            <a class="sidebar-link" href="#">
+                <i class="fas fa-users" aria-hidden="true"></i>
+                <span class="sidebar-link-label">Oil Bill Details</span>
+            </a>
         </li>
         <li class="nav-item">
-            <a class="sidebar-link" href="dailyCollections.html"><i class="fas fa-chart-line me-2"></i>
-                Daily Report</a>
+            <a class="sidebar-link" href="dailyCollections.html">
+                <i class="fas fa-chart-line" aria-hidden="true"></i>
+                <span class="sidebar-link-label">Daily Report</span>
+            </a>
         </li>
         <li class="nav-item">
-            <a class="sidebar-link" href="#"><i class="fas fa-cogs me-2"></i> Settings</a>
+            <a class="sidebar-link" href="#">
+                <i class="fas fa-cogs" aria-hidden="true"></i>
+                <span class="sidebar-link-label">Settings</span>
+            </a>
         </li>
     </ul>
 </div>

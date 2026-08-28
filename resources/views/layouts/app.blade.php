@@ -5,7 +5,7 @@
 
 <body>
     <!-- Header Bar -->
-    <nav class="navbar navbar-expand-lg fixed-top">
+    <nav class="navbar navbar-expand-lg sticky-top">
         @include('layouts.header')
     </nav>
 

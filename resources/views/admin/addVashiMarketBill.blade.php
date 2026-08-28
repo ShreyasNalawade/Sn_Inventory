@@ -70,6 +70,54 @@
             font-size: 1.2rem;
             box-shadow: 0 4px 10px rgba(255, 99, 71, 0.4);
         }
+
+        .payment-difference-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            background-color: #f8fafc;
+            padding: 1rem;
+        }
+
+        .payment-difference-card .form-control {
+            font-weight: 600;
+        }
+
+        .payment-difference-card .form-control.difference-interest {
+            color: #dc2626;
+            border-color: #f87171;
+            background-color: #fef2f2;
+        }
+
+        .payment-difference-card .form-control.difference-offer {
+            color: #15803d;
+            border-color: #86efac;
+            background-color: #f0fdf4;
+        }
+
+        .payment-difference-card .form-control.difference-even {
+            color: #475569;
+            border-color: #cbd5e1;
+            background-color: #fff;
+        }
+
+        #payment-difference-status {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        #payment-difference-status.status-interest {
+            color: #dc2626;
+        }
+
+        #payment-difference-status.status-offer {
+            color: #15803d;
+        }
+
+        #payment-difference-status.status-even {
+            color: #475569;
+        }
     </style>
     <style>
         #pageLoader {
@@ -93,7 +141,7 @@
         <div class="card shadow-sm">
             <div class="card-header bg-white text-center py-3">
                 <h3 class="card-title fw-bold text-dark mb-0">
-                    Add Vashi Market Bill
+                    Add Vashi Market Bill shreyash
                 </h3>
             </div>
             <div class="card-body">
@@ -222,6 +270,26 @@
                                 <label for="paid-amount" class="form-label">Paid Amount</label>
                                 <input type="number" class="form-control" id="paid-amount" name="paid_amount" step="0.01" />
                             </div>
+                            <div class="col-12">
+                                <div class="payment-difference-card">
+                                    <div class="row g-3 align-items-end">
+                                        <div class="col-md-6 col-lg-4">
+                                            <label for="payment-difference" class="form-label">Interest / Offer Difference</label>
+                                            <input type="number" class="form-control difference-even"
+                                                id="payment-difference" name="payment_difference" step="0.01"
+                                                value="0.00" />
+                                        </div>
+                                        <div class="col-md-6 col-lg-4">
+                                            <label class="form-label">Percentage</label>
+                                            <input type="text" class="form-control" id="payment-difference-percentage"
+                                                value="0.00%" readonly />
+                                        </div>
+                                    </div>
+                                    <span id="payment-difference-status" class="status-even">
+                                        Enter the total bill amount and paid amount to calculate.
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -306,6 +374,10 @@
             const productContainer = document.getElementById("product-container");
             const productTemplate = document.getElementById("product-template");
             const totalBillAmountInput = document.getElementById('total-bill-amount');
+            const paidAmountInput = document.getElementById('paid-amount');
+            const paymentDifferenceInput = document.getElementById('payment-difference');
+            const paymentDifferencePercentage = document.getElementById('payment-difference-percentage');
+            const paymentDifferenceStatus = document.getElementById('payment-difference-status');
             const productCountBadge = document.getElementById('product-count-badge');
 
             // Set initial state for payment section
@@ -315,6 +387,77 @@
             paidSwitch.addEventListener("change", () => {
                 paymentDetailsSection.style.display = paidSwitch.checked ? "block" : "none";
             });
+
+            const formatAmount = (amount) => {
+                return Math.abs(amount).toFixed(2);
+            };
+
+            const updateDifferenceDisplay = (difference, totalBillAmount) => {
+                const percentage = totalBillAmount > 0
+                    ? (Math.abs(difference) / totalBillAmount) * 100
+                    : 0;
+
+                paymentDifferencePercentage.value = `${percentage.toFixed(2)}%`;
+                paymentDifferenceInput.classList.remove(
+                    'difference-interest',
+                    'difference-offer',
+                    'difference-even'
+                );
+                paymentDifferenceStatus.classList.remove(
+                    'status-interest',
+                    'status-offer',
+                    'status-even'
+                );
+
+                if (difference > 0) {
+                    paymentDifferenceInput.classList.add('difference-interest');
+                    paymentDifferenceStatus.classList.add('status-interest');
+                    paymentDifferenceStatus.textContent =
+                        `Interest paid: +₹${formatAmount(difference)} (${percentage.toFixed(2)}%)`;
+                } else if (difference < 0) {
+                    paymentDifferenceInput.classList.add('difference-offer');
+                    paymentDifferenceStatus.classList.add('status-offer');
+                    paymentDifferenceStatus.textContent =
+                        `Offer received: ₹${formatAmount(difference)} (${percentage.toFixed(2)}%)`;
+                } else {
+                    paymentDifferenceInput.classList.add('difference-even');
+                    paymentDifferenceStatus.classList.add('status-even');
+                    paymentDifferenceStatus.textContent = 'No interest or offer difference (0.00%).';
+                }
+            };
+
+            const calculatePaymentDifference = () => {
+                const totalBillAmount = parseFloat(totalBillAmountInput.value);
+                const paidAmount = parseFloat(paidAmountInput.value);
+
+                if (!Number.isFinite(totalBillAmount) || !Number.isFinite(paidAmount) || totalBillAmount <= 0) {
+                    paymentDifferenceInput.value = '0.00';
+                    updateDifferenceDisplay(0, 0);
+                    paymentDifferenceStatus.textContent =
+                        'Enter a valid total bill amount and paid amount to calculate.';
+                    return;
+                }
+
+                const difference = paidAmount - totalBillAmount;
+                paymentDifferenceInput.value = difference.toFixed(2);
+                updateDifferenceDisplay(difference, totalBillAmount);
+            };
+
+            const updatePercentageFromEditedDifference = () => {
+                const totalBillAmount = parseFloat(totalBillAmountInput.value);
+                const difference = parseFloat(paymentDifferenceInput.value);
+
+                if (!Number.isFinite(totalBillAmount) || totalBillAmount <= 0 || !Number.isFinite(difference)) {
+                    paymentDifferencePercentage.value = '0.00%';
+                    return;
+                }
+
+                updateDifferenceDisplay(difference, totalBillAmount);
+            };
+
+            totalBillAmountInput.addEventListener('input', calculatePaymentDifference);
+            paidAmountInput.addEventListener('input', calculatePaymentDifference);
+            paymentDifferenceInput.addEventListener('input', updatePercentageFromEditedDifference);
 
             // Toggle payment-specific inputs
             paymentTypeSelect.addEventListener("change", (e) => {
