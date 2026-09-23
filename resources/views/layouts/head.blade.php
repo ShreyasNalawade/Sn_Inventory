@@ -9,4 +9,5 @@
     <!-- Custom CSS -->
     <!-- <link rel="stylesheet" href="{{ asset('assets/css/new-main.css') }}" /> -->
     <link rel="stylesheet" href="{{ asset('assets/css/main.css') }}" />
+    @yield('styles')
 </head>

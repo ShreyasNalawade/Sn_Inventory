@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PdfUnlockController;
 use App\Http\Controllers\ProductListController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VashiMarketController;
@@ -45,5 +46,11 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/vashi-market/{id}', [VashiMarketController::class, 'updateVashiBill'])->name('vashi-market.update');
     Route::get('vashi-market/{vashiMarketBill}/payment', [VashiMarketController::class, 'showPaymentForm'])->name('vashi-market.payment.form');
     Route::get('vashi-market/details/{vashiMarketBill}', [VashiMarketController::class, 'showBillDetails'])->name('vashi-market.showBillDetails');
+   
+   
+   // pdf unlocker routes
+    Route::get('/pdf-unlocker',[PdfUnlockController::class, 'index'])->name('pdf.unlocker');
 
+    Route::post('/pdf-unlock',[PdfUnlockController::class, 'unlock'])->name('pdf.unlock');
+   
 });

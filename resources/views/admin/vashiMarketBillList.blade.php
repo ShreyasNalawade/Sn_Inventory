@@ -15,6 +15,83 @@
             transform: translateY(-5px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
+
+        .skeleton-card {
+            pointer-events: none;
+        }
+
+        .skeleton-row {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .skeleton-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .skeleton-icon {
+            flex: 0 0 1.25rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+        }
+
+        .skeleton-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .skeleton-icon,
+        .skeleton-label,
+        .skeleton-value {
+            position: relative;
+            overflow: hidden;
+            background: #e9ecef;
+        }
+
+        .skeleton-label {
+            height: 12px;
+            width: 24%;
+            margin-bottom: 0.45rem;
+            border-radius: 4px;
+        }
+
+        .skeleton-value {
+            height: 12px;
+            width: 58%;
+            border-radius: 4px;
+        }
+
+        .skeleton-row:nth-child(2) .skeleton-value {
+            width: 78%;
+        }
+
+        .skeleton-row:nth-child(3) .skeleton-value {
+            width: 42%;
+        }
+
+        .skeleton-row:nth-child(4) .skeleton-value {
+            width: 52%;
+        }
+
+        .skeleton-icon::after,
+        .skeleton-label::after,
+        .skeleton-value::after {
+            position: absolute;
+            inset: 0;
+            content: "";
+            transform: translateX(-100%);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+            animation: skeleton-shimmer 1.3s infinite;
+        }
+
+        @keyframes skeleton-shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
     </style>
 @endsection
 
@@ -28,7 +105,7 @@
             <div class="card-body">
                 <form action="{{ route('vashi-market.index') }}" method="GET" class="mb-4">
                     <div class="row g-3 align-items-end">
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <label for="search-input" class="form-label">Search</label>
                             <input type="search" name="search" id="search-input" class="form-control"
                                 placeholder="Search by party, bill no, product..." value="{{ request('search') }}" />
@@ -43,8 +120,15 @@
                             <input type="date" name="end_date" id="end_date" class="form-control"
                                 value="{{ request('end_date') }}">
                         </div>
-                        <div class="col-md-1 d-flex">
+                        <div class="col-6 col-md-1 d-flex">
                             <button type="submit" class="btn btn-info w-100"><i class="fas fa-filter"></i></button>
+                        </div>
+                        <div class="col-6 col-md-1 d-flex">
+                            <a href="{{ route('vashi-market.index') }}" class="btn btn-outline-secondary w-100"
+                                title="Reset filters">
+                                <i class="fas fa-rotate-left"></i>
+                                <span class="d-md-none ms-1">Reset</span>
+                            </a>
                         </div>
                     </div>
                 </form>
@@ -53,41 +137,29 @@
                             class="fas fa-plus me-1"></i> Add Bill</a>
                 </div>
 
-                <div id="data-list" class="d-flex flex-column gap-3" style="max-height: 70vh; overflow-y: auto">
-                    @foreach ($bills as $bill)
-                        <a href="{{ route('vashi-market.showBillDetails', $bill->id) }}"
-                            class="data-card-link text-decoration-none">
-                            <div class="card data-card">
+                <div id="data-list" class="d-flex flex-column gap-3" style="max-height: 70vh; overflow-y: auto"
+                    data-next-cursor="{{ $bills->nextCursor()?->encode() }}"
+                    data-has-more="{{ $bills->hasMorePages() ? '1' : '0' }}">
+                    @include('admin.vashiMarketBillCards', ['bills' => $bills])
+
+                    <div id="skeleton-loader" class="d-none" aria-hidden="true">
+                        @for ($i = 0; $i < 3; $i++)
+                            <div class="card skeleton-card">
                                 <div class="card-body">
-                                    {{-- The content inside the card remains the same --}}
-                                    <ul class="list-unstyled mb-0">
-                                        <li class="d-flex align-items-center mb-2">
-                                            <i class="fas fa-calendar-alt fa-fw me-2 text-muted"></i>
-                                            <strong>Bill Date:</strong>&nbsp;
-                                            <span
-                                                class="bill-date">{{ \Carbon\Carbon::parse($bill->bill_date)->format('d/m/Y') }}</span>
-                                        </li>
-                                        <li class="d-flex align-items-center mb-2">
-                                            <i class="fas fa-box fa-fw me-2 text-muted"></i>
-                                            <strong>Products:</strong>&nbsp;
-                                            <span
-                                                class="product-name">{{ $bill->products->pluck('product_name')->implode(', ') }}</span>
-                                        </li>
-                                        <li class="d-flex align-items-center mb-2">
-                                            <i class="fas fa-user-tie fa-fw me-2 text-muted"></i>
-                                            <strong>Party:</strong>&nbsp;
-                                            <span class="party-name">{{ $bill->party_name }}</span>
-                                        </li>
-                                        <li class="d-flex align-items-center mb-2">
-                                            <i class="fas fa-file-invoice fa-fw me-2 text-muted"></i>
-                                            <strong>Bill No:</strong>&nbsp;
-                                            <span class="bill-no">{{ $bill->bill_no }}</span>
-                                        </li>
-                                    </ul>
+                                    @for ($row = 0; $row < 4; $row++)
+                                        <div class="skeleton-row">
+                                            <div class="skeleton-icon"></div>
+                                            <div class="skeleton-text">
+                                                <div class="skeleton-label skeleton-shimmer"></div>
+                                                <div class="skeleton-value skeleton-shimmer"></div>
+                                            </div>
+                                        </div>
+                                    @endfor
                                 </div>
                             </div>
-                        </a>
-                    @endforeach
+                        @endfor
+                    </div>
+
                     <div id="no-results" class="text-center text-muted p-4" style="display: none;">No bills found matching
                         your search.</div>
                 </div>
@@ -100,40 +172,166 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const searchInput = document.getElementById('search-input');
+            const filterForm = searchInput.closest('form');
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('end_date');
             const dataList = document.getElementById('data-list');
-            const billCards = dataList.querySelectorAll('.data-card-link');
+            const skeletonLoader = document.getElementById('skeleton-loader');
             const noResultsMessage = document.getElementById('no-results');
+            const defaultNoResultsMessage = noResultsMessage.textContent.trim();
 
-            function checkInitialState() {
-                if (billCards.length === 0) {
-                    noResultsMessage.style.display = 'block';
+            let nextCursor = dataList.dataset.nextCursor || null;
+            let hasMore = dataList.dataset.hasMore === '1';
+            let isLoading = false;
+            let searchTimer = null;
+            let activeRequest = null;
+            let requestId = 0;
+
+            const setLoading = (isVisible) => {
+                skeletonLoader.classList.toggle('d-none', !isVisible);
+                skeletonLoader.setAttribute('aria-hidden', String(!isVisible));
+            };
+
+            const removeBillCards = () => {
+                dataList.querySelectorAll('.data-card-link').forEach((card) => card.remove());
+            };
+
+            const updateBrowserUrl = () => {
+                const url = new URL(filterForm.action, window.location.origin);
+                const params = new URLSearchParams();
+
+                if (searchInput.value.trim()) {
+                    params.set('search', searchInput.value.trim());
                 }
-            }
-            function filterBills() {
-                const searchTerm = searchInput.value.toLowerCase().trim();
-                let visibleCount = 0;
+                if (startDateInput.value) {
+                    params.set('start_date', startDateInput.value);
+                }
+                if (endDateInput.value) {
+                    params.set('end_date', endDateInput.value);
+                }
 
-                billCards.forEach(cardLink => {
-                    const billDate = cardLink.querySelector('.bill-date').textContent.toLowerCase();
-                    const partyName = cardLink.querySelector('.party-name').textContent.toLowerCase();
-                    const billNo = cardLink.querySelector('.bill-no').textContent.toLowerCase();
-                    const productName = cardLink.querySelector('.product-name').textContent.toLowerCase();
+                url.search = params.toString();
+                window.history.replaceState({}, '', url);
+            };
 
-                    if (partyName.includes(searchTerm) || billNo.includes(searchTerm) || productName.includes(searchTerm) || billDate.includes(searchTerm)) {
-                        cardLink.style.display = '';
-                        visibleCount++;
-                    } else {
-                        cardLink.style.display = 'none';
+            const getBillsUrl = () => {
+                const url = new URL(filterForm.action, window.location.origin);
+                const params = new URLSearchParams();
+
+                if (searchInput.value.trim()) {
+                    params.set('search', searchInput.value.trim());
+                }
+                if (startDateInput.value) {
+                    params.set('start_date', startDateInput.value);
+                }
+                if (endDateInput.value) {
+                    params.set('end_date', endDateInput.value);
+                }
+                if (nextCursor) {
+                    params.set('cursor', nextCursor);
+                }
+
+                url.search = params.toString();
+                return url.toString();
+            };
+
+            const showNoResultsIfNeeded = () => {
+                const hasCards = dataList.querySelector('.data-card-link') !== null;
+                noResultsMessage.style.display = hasCards ? 'none' : 'block';
+            };
+
+            const loadBills = async (reset = false) => {
+                if (isLoading && !reset) {
+                    return;
+                }
+                if (!reset && !hasMore) {
+                    return;
+                }
+
+                if (reset) {
+                    activeRequest?.abort();
+                    requestId++;
+                    nextCursor = null;
+                    hasMore = true;
+                    removeBillCards();
+                    noResultsMessage.style.display = 'none';
+                    updateBrowserUrl();
+                }
+
+                const currentRequestId = ++requestId;
+                const controller = new AbortController();
+                activeRequest = controller;
+                isLoading = true;
+                noResultsMessage.textContent = defaultNoResultsMessage;
+                setLoading(true);
+
+                try {
+                    const response = await fetch(getBillsUrl(), {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        signal: controller.signal,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Request failed with status ${response.status}`);
                     }
-                });
 
-                if (noResultsMessage) {
-                    noResultsMessage.style.display = visibleCount === 0 ? 'block' : 'none';
+                    const result = await response.json();
+
+                    if (currentRequestId !== requestId) {
+                        return;
+                    }
+
+                    if (result.html) {
+                        skeletonLoader.insertAdjacentHTML('beforebegin', result.html);
+                    }
+
+                    nextCursor = result.next_cursor || null;
+                    hasMore = Boolean(result.has_more);
+                    showNoResultsIfNeeded();
+
+                    // If one page does not fill the scroll area, fetch the next
+                    // page so the user can continue scrolling naturally.
+                    if (hasMore && dataList.scrollHeight <= dataList.clientHeight + 80) {
+                        requestAnimationFrame(() => loadBills());
+                    }
+                } catch (error) {
+                    if (error.name !== 'AbortError' && currentRequestId === requestId) {
+                        console.error('Unable to load bills:', error);
+                        noResultsMessage.textContent = 'Unable to load bills. Please try again.';
+                        noResultsMessage.style.display = 'block';
+                    }
+                } finally {
+                    if (currentRequestId === requestId) {
+                        isLoading = false;
+                        activeRequest = null;
+                        setLoading(false);
+                    }
                 }
-            }
+            };
 
-            searchInput.addEventListener('keyup', filterBills);
-            checkInitialState();
+            filterForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                clearTimeout(searchTimer);
+                loadBills(true);
+            });
+
+            searchInput.addEventListener('input', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => loadBills(true), 350);
+            });
+
+            dataList.addEventListener('scroll', function () {
+                const remainingScroll = dataList.scrollHeight - dataList.scrollTop - dataList.clientHeight;
+
+                if (remainingScroll < 180) {
+                    loadBills();
+                }
+            });
+
+            showNoResultsIfNeeded();
         });
     </script>
 @endsection

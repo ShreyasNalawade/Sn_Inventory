@@ -23,29 +23,58 @@ class VashiMarketController extends Controller
      */
     public function index(Request $request)
     {
-        $query = VashiMarketBill::with('products')->latest();
+        $searchTerm = trim((string) $request->input('search', ''));
+        $searchDate = null;
 
+        // The UI displays dates as d/m/Y, while the database stores Y-m-d.
+        if (preg_match('/^(\d{2})[\/-](\d{2})[\/-](\d{4})$/', $searchTerm, $matches)
+            && checkdate((int) $matches[2], (int) $matches[1], (int) $matches[3])) {
+            $searchDate = "{$matches[3]}-{$matches[2]}-{$matches[1]}";
+        }
 
-        if ($request->has('search')) {
-            $searchTerm = $request->input('search');
-            $query->where(function ($q) use ($searchTerm) {
+        $query = VashiMarketBill::query()
+            ->select(['id', 'bill_date', 'party_name', 'bill_no'])
+            ->with([
+                'products:id,vashi_market_bill_id,product_name',
+            ])
+            ->orderByDesc('id');
+
+        if ($searchTerm !== '') {
+            $query->where(function ($q) use ($searchTerm, $searchDate) {
                 $q->where('party_name', 'like', "%{$searchTerm}%")
                     ->orWhere('bill_no', 'like', "%{$searchTerm}%")
                     ->orWhere('bill_date', 'like', "%{$searchTerm}%")
                     ->orWhereHas('products', function ($productQuery) use ($searchTerm) {
                         $productQuery->where('product_name', 'like', "%{$searchTerm}%");
                     });
+
+                if ($searchDate) {
+                    $q->orWhereDate('bill_date', $searchDate);
+                }
             });
         }
 
         if ($request->filled('start_date')) {
-            $query->whereDate('bill_date', '>=', $request->input('start_date'));
+            $query->where('bill_date', '>=', $request->input('start_date'));
         }
 
         if ($request->filled('end_date')) {
-            $query->whereDate('bill_date', '<=', $request->input('end_date'));
+            $query->where('bill_date', '<=', $request->input('end_date'));
         }
-        $bills = $query->get();
+        // Cursor pagination avoids the increasingly expensive OFFSET used by
+        // normal pagination when this table contains millions of records.
+        $bills = $query->cursorPaginate(20, ['*'], 'cursor', $request->input('cursor'));
+
+        if ($request->expectsJson() || $request->ajax()) {
+            $nextCursor = $bills->nextCursor();
+
+            return response()->json([
+                'html' => view('admin.vashiMarketBillCards', compact('bills'))->render(),
+                'has_more' => $bills->hasMorePages(),
+                'next_cursor' => $nextCursor ? $nextCursor->encode() : null,
+            ]);
+        }
+
         return view('admin.vashiMarketBillList', compact('bills'));
     }
 

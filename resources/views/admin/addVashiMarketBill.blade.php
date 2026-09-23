@@ -36,29 +36,156 @@
             display: none;
         }
 
-        .product-item {
-            border: 1px solid #e2e8f0;
-            padding: 1rem;
-            border-radius: 0.75rem;
+        .product-section-header {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0.85rem;
+        }
+
+        .product-section-header h4 {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+            font-weight: 700;
+        }
+
+        .product-list-wrap {
+            background: #eef2f7;
+            border: 1px solid #d8e0ea;
+            border-radius: 16px;
+            padding: 12px;
+            margin-top: 4px;
+        }
+
+        #product-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        #product-container .product-item {
+            border: 1px solid #cfd8e3 !important;
+            padding: 0 !important;
+            border-radius: 14px !important;
             position: relative;
-            margin-bottom: 1rem;
-            background-color: #fff;
+            margin: 0;
+            background: #ffffff !important;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
         }
 
-        .product-item .delete-btn {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            z-index: 10;
+        #product-container .product-item .delete-btn {
+            flex-shrink: 0;
+            background: #fff;
+            color: #dc2626;
+            border-color: #fecaca;
+            font-weight: 600;
         }
 
-        .product-header {
-            background-color: #f8f9fa;
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid #e2e8f0;
-            margin: -1rem -1rem 1rem -1rem;
-            border-top-left-radius: 0.75rem;
-            border-top-right-radius: 0.75rem;
+        #product-container .product-header {
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            padding: 12px 14px;
+            border-bottom: none;
+            margin: 0;
+            color: #fff;
+        }
+
+        #product-container .product-item:nth-child(even) .product-header {
+            background: linear-gradient(135deg, #0369a1, #0284c7);
+        }
+
+        .product-number-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.7rem;
+            height: 1.7rem;
+            padding: 0 0.35rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.22);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        #product-container .product-heading {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        #product-container .product-body {
+            padding: 12px 14px 6px;
+            background: #fff;
+        }
+
+        .product-group {
+            background: #f8fafc;
+            border: 1px solid #e8eef5;
+            border-radius: 10px;
+            padding: 10px 12px 12px;
+            margin-bottom: 10px;
+        }
+
+        .product-group-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .product-footer {
+            background: #f0fdf4;
+            border-top: 1px dashed #86efac;
+            padding: 12px 14px 14px;
+        }
+
+        .product-footer .form-label {
+            font-weight: 600;
+            color: #166534;
+        }
+
+        .product-footer .product-amount {
+            font-weight: 700;
+            background: #fff;
+            border-color: #86efac;
+        }
+
+        .product-empty-state {
+            display: none;
+            text-align: center;
+            padding: 1.5rem 1rem;
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            background: #fff;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        #product-container:empty + .product-empty-state,
+        #product-container:not(:has(.product-item)) + .product-empty-state {
+            display: block;
+        }
+
+        @media (max-width: 576px) {
+            .product-list-wrap {
+                padding: 10px;
+            }
+
+            #product-container {
+                gap: 18px;
+            }
+
+            #product-container .product-header {
+                padding: 11px 12px;
+            }
+
+            #product-container .product-item .delete-btn .delete-label {
+                display: none;
+            }
         }
 
         .btn-continue {
@@ -137,6 +264,64 @@
 @endsection
 
 @section('content')
+    <style>
+        .product-list-wrap {
+            background: #eef2f7;
+            border: 1px solid #d8e0ea;
+            border-radius: 16px;
+            padding: 12px;
+            margin-top: 4px;
+        }
+        #product-container { display: flex; flex-direction: column; gap: 16px; }
+        #product-container .product-item {
+            border: 1px solid #cfd8e3 !important;
+            padding: 0 !important;
+            border-radius: 14px !important;
+            background: #fff !important;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+        #product-container .product-header {
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            padding: 12px 14px;
+            color: #fff;
+        }
+        #product-container .product-item:nth-child(even) .product-header {
+            background: linear-gradient(135deg, #0369a1, #0284c7);
+        }
+        #product-container .product-heading { color: #fff; font-weight: 700; font-size: 1rem; margin: 0; }
+        .product-number-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 1.7rem; height: 1.7rem; border-radius: 999px;
+            background: rgba(255,255,255,0.22); color: #fff; font-weight: 700; font-size: 0.8rem;
+        }
+        #product-container .delete-btn {
+            background: #fff; color: #dc2626; border: 1px solid #fecaca; font-weight: 600;
+        }
+        #product-container .product-body { padding: 12px 14px 6px; background: #fff; }
+        .product-group {
+            background: #f8fafc; border: 1px solid #e8eef5; border-radius: 10px;
+            padding: 10px 12px 12px; margin-bottom: 10px;
+        }
+        .product-group-title {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; color: #64748b; margin-bottom: 8px;
+        }
+        .product-footer {
+            background: #f0fdf4; border-top: 1px dashed #86efac; padding: 12px 14px 14px;
+        }
+        .product-footer .form-label { font-weight: 600; color: #166534; }
+        .product-footer .product-amount { font-weight: 700; background: #fff; border-color: #86efac; }
+        .product-empty-state {
+            display: none; text-align: center; padding: 1.5rem 1rem;
+            border: 1px dashed #cbd5e1; border-radius: 12px; background: #fff; color: #64748b;
+        }
+        #product-container:empty + .product-empty-state { display: block; }
+        @media (max-width: 576px) {
+            #product-container { gap: 18px; }
+            #product-container .delete-btn .delete-label { display: none; }
+        }
+    </style>
     <div class="page-content container-fluid">
         <div class="card shadow-sm">
             <div class="card-header bg-white text-center py-3">
@@ -210,7 +395,7 @@
                     </div>
 
                     <div class="form-section">
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="product-section-header d-flex justify-content-between align-items-center">
                             <h4>Product Details</h4>
                             <button type="button" class="btn btn-primary btn-sm" id="add-product-btn"
                                 style="min-width: 130px;">
@@ -218,7 +403,13 @@
                                     class="badge bg-light text-dark ms-1"></span>
                             </button>
                         </div>
-                        <div id="product-container" class="mt-3"></div>
+                        <div class="product-list-wrap">
+                            <div id="product-container"></div>
+                            <div class="product-empty-state">
+                                <i class="fas fa-box-open mb-2 d-block" style="font-size: 1.5rem;"></i>
+                                No products added yet. Click <strong>Add Product</strong> to start.
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-section">
@@ -311,38 +502,57 @@
     <template id="product-template">
         <div class="product-item">
             <div class="product-header d-flex justify-content-between align-items-center">
-                <h5 class="product-heading mb-0"></h5>
-                <button type="button" class="btn-close delete-btn"></button>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="product-number-badge">1</span>
+                    <h5 class="product-heading mb-0">Product 1</h5>
+                </div>
+                <button type="button" class="btn btn-sm delete-btn" title="Remove product">
+                    <i class="fas fa-trash-alt"></i><span class="delete-label ms-1">Remove</span>
+                </button>
             </div>
-            <div class="row g-3">
-                <div class="col-md-6 col-lg-4">
-                    <label class="form-label">Product</label>
-                    <input type="text" class="form-control product-name" name="products[][product_name]" required />
+            <div class="product-body">
+                <div class="product-group">
+                    <div class="product-group-title">Product info</div>
+                    <div class="row g-2">
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <label class="form-label">Product</label>
+                            <input type="text" class="form-control product-name" name="products[][product_name]" required />
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <label class="form-label">Brand Name</label>
+                            <input type="text" class="form-control brand-name" name="products[][brand_name]" />
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6 col-lg-4">
-                    <label class="form-label">Brand Name</label>
-                    <input type="text" class="form-control brand-name" name="products[][brand_name]" />
+                <div class="product-group">
+                    <div class="product-group-title">Quantity</div>
+                    <div class="row g-2">
+                        <div class="col-6 col-lg-4">
+                            <label class="form-label">No. of Bags</label>
+                            <input type="number" class="form-control num-bags" name="products[][num_bags]" step="1" required />
+                        </div>
+                        <div class="col-6 col-lg-4">
+                            <label class="form-label">Bag Size (kg)</label>
+                            <input type="number" class="form-control bag-size" name="products[][bag_size]" step="0.01" required />
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <label class="form-label">Total Kg</label>
+                            <input type="number" class="form-control total-kg" name="products[][total_kg]" step="0.01" required />
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6 col-lg-4">
-                    <label class="form-label">Number of Bags</label>
-                    <input type="number" class="form-control num-bags" name="products[][num_bags]" step="1" required />
-                </div>
-                <div class="col-md-6 col-lg-4">
-                    <label class="form-label">Size of Bag (kg)</label>
-                    <input type="number" class="form-control bag-size" name="products[][bag_size]" step="0.01" required />
-                </div>
-                <div class="col-md-6 col-lg-4">
-                    <label class="form-label">Total Kg</label>
-                    <input type="number" class="form-control total-kg" name="products[][total_kg]" step="0.01" required />
-                </div>
-                <div class="col-md-6 col-lg-4">
-                    <label class="form-label">Rate</label>
-                    <input type="number" class="form-control product-rate" name="products[][rate]" step="0.01" required />
-                </div>
-                <div class="col-md-6 col-lg-4">
-                    <label class="form-label">Total Amount of Product</label>
-                    <input type="number" class="form-control product-amount" name="products[][product_amount]" step="0.01"
-                        value="0.00" required />
+            </div>
+            <div class="product-footer">
+                <div class="row g-2">
+                    <div class="col-6 col-lg-4">
+                        <label class="form-label">Rate</label>
+                        <input type="number" class="form-control product-rate" name="products[][rate]" step="0.01" required />
+                    </div>
+                    <div class="col-6 col-lg-4">
+                        <label class="form-label">Total Amount</label>
+                        <input type="number" class="form-control product-amount" name="products[][product_amount]" step="0.01"
+                            value="0.00" required />
+                    </div>
                 </div>
             </div>
         </div>
@@ -475,7 +685,9 @@
             const renumberProducts = () => {
                 const productItems = document.querySelectorAll("#product-container .product-item");
                 productItems.forEach((item, index) => {
-                    item.querySelector(".product-heading").textContent = `Product ${index + 1}`;
+                    const productNumber = index + 1;
+                    item.querySelector(".product-number-badge").textContent = productNumber;
+                    item.querySelector(".product-heading").textContent = `Product ${productNumber}`;
                     // Update array indices in name attributes
                     item.querySelectorAll('[name^="products["]').forEach(input => {
                         input.name = input.name.replace(/products\[\d*\]/, `products[${index}]`);
