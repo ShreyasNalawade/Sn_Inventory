@@ -33,7 +33,16 @@ class VashiMarketController extends Controller
         }
 
         $query = VashiMarketBill::query()
-            ->select(['id', 'bill_date', 'party_name', 'bill_no'])
+            ->select([
+                'id',
+                'bill_date',
+                'party_name',
+                'bill_no',
+                'is_paid',
+                'paid_amount',
+                'total_bill_amount',
+                'payment_difference',
+            ])
             ->with([
                 'products:id,vashi_market_bill_id,product_name',
             ])
@@ -52,6 +61,14 @@ class VashiMarketController extends Controller
                     $q->orWhereDate('bill_date', $searchDate);
                 }
             });
+        }
+
+        if ($request->filled('payment_status')) {
+            if ($request->input('payment_status') === 'paid') {
+                $query->where('is_paid', true);
+            } elseif ($request->input('payment_status') === 'unpaid') {
+                $query->where('is_paid', false);
+            }
         }
 
         if ($request->filled('start_date')) {
