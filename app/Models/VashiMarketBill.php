@@ -24,6 +24,7 @@ class VashiMarketBill extends Model
         'receipt_no',
         'paid_date',
         'paid_amount',
+        'payment_difference',
     ];
 
     public function products()

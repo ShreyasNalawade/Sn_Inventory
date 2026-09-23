@@ -98,6 +98,7 @@ class VashiMarketController extends Controller
             'receipt_no' => 'nullable|string',
             'paid_date' => 'nullable|date',
             'paid_amount' => 'nullable|numeric',
+            'payment_difference' => 'nullable|numeric',
             'products' => 'required|array',
             'products.*.product_name' => 'required|string',
             'products.*.brand_name' => 'nullable|string',
@@ -128,9 +129,13 @@ class VashiMarketController extends Controller
                     'cheque_no',
                     'receipt_no',
                     'paid_date',
-                    'paid_amount'
+                    'paid_amount',
+                    'payment_difference',
                 ]);
                 $billData['is_paid'] = $request->has('is_paid');
+                $billData['payment_difference'] = $billData['is_paid']
+                    ? ($request->input('payment_difference') ?? 0)
+                    : null;
 
                 $bill = VashiMarketBill::create($billData);
 
@@ -174,6 +179,7 @@ class VashiMarketController extends Controller
             'receipt_no' => 'nullable|string',
             'paid_date' => 'nullable|date',
             'paid_amount' => 'nullable|numeric',
+            'payment_difference' => 'nullable|numeric',
             'products' => 'required|array',
             'products.*.product_name' => 'required|string',
             'products.*.brand_name' => 'nullable|string',
@@ -189,6 +195,8 @@ class VashiMarketController extends Controller
         }
 
         DB::transaction(function () use ($bill, $request) {
+            $isPaid = $request->has('is_paid');
+
             $bill->update($request->only([
                 'bill_date',
                 'received_date',
@@ -201,8 +209,13 @@ class VashiMarketController extends Controller
                 'cheque_no',
                 'receipt_no',
                 'paid_date',
-                'paid_amount'
-            ]) + ['is_paid' => $request->has('is_paid')]);
+                'paid_amount',
+            ]) + [
+                'is_paid' => $isPaid,
+                'payment_difference' => $isPaid
+                    ? ($request->input('payment_difference') ?? 0)
+                    : null,
+            ]);
 
             $bill->products()->delete(); // Remove old
             foreach ($request->products as $product) {

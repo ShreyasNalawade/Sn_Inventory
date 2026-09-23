@@ -80,6 +80,29 @@
                         <div class="col-md-4"><strong>Payment Type:</strong> {{ $bill->payment_type ?? 'N/A' }}</div>
                         <div class="col-md-4"><strong>Transaction/Cheque No:</strong>
                             {{ $bill->transaction_id ?? $bill->cheque_no ?? 'N/A' }}</div>
+                        @php
+                            $difference = (float) ($bill->payment_difference ?? 0);
+                            $totalBillAmount = (float) $bill->total_bill_amount;
+                            $differencePercent = $totalBillAmount > 0
+                                ? (abs($difference) / $totalBillAmount) * 100
+                                : 0;
+                        @endphp
+                        <div class="col-md-4">
+                            <strong>Interest / Offer:</strong>
+                            @if($difference > 0)
+                                <span class="text-danger fw-semibold">
+                                    Interest Paid: +₹{{ number_format($difference, 2) }}
+                                    ({{ number_format($differencePercent, 2) }}%)
+                                </span>
+                            @elseif($difference < 0)
+                                <span class="text-success fw-semibold">
+                                    Offer Received: ₹{{ number_format(abs($difference), 2) }}
+                                    ({{ number_format($differencePercent, 2) }}%)
+                                </span>
+                            @else
+                                <span class="text-muted">No interest or offer (0.00%)</span>
+                            @endif
+                        </div>
                     @endif
                 </div>
 
