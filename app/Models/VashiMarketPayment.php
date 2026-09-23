@@ -5,45 +5,42 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class VashiMarketBill extends Model
+class VashiMarketPayment extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'bill_date',
-        'received_date',
-        'bill_no',
         'party_name',
-        'dalal',
-        'transport_name',
-        'total_bill_amount',
-        'is_paid',
         'payment_type',
         'transaction_id',
         'cheque_no',
         'receipt_no',
         'paid_date',
-        'paid_amount',
-        'payment_difference',
+        'total_bills_amount',
+        'total_paid_amount',
+        'total_difference',
+        'notes',
     ];
 
-    public function products()
-    {
-        return $this->hasMany(VashiMarketBillProduct::class);
-    }
+    protected $casts = [
+        'paid_date' => 'date',
+        'total_bills_amount' => 'decimal:2',
+        'total_paid_amount' => 'decimal:2',
+        'total_difference' => 'decimal:2',
+    ];
 
-    public function paymentAllocations()
+    public function allocations()
     {
         return $this->hasMany(VashiMarketPaymentAllocation::class);
     }
 
-    public function payments()
+    public function bills()
     {
         return $this->belongsToMany(
-            VashiMarketPayment::class,
+            VashiMarketBill::class,
             'vashi_market_payment_allocations',
-            'vashi_market_bill_id',
-            'vashi_market_payment_id'
+            'vashi_market_payment_id',
+            'vashi_market_bill_id'
         )->withPivot(['bill_amount', 'allocated_amount', 'interest_difference', 'interest_percentage'])
             ->withTimestamps();
     }

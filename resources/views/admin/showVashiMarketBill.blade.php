@@ -34,8 +34,9 @@
                         <i class="fas fa-edit me-1"></i> Edit
                     </a>
 
-                    <a href="" class="btn btn-outline-success btn-sm mb-1 mb-md-0">
-                        <i class="fas fa-money-check-alt me-1"></i> Update Payment
+                    <a href="{{ route('vashi-market.payments.create', ['party_name' => $bill->party_name]) }}"
+                        class="btn btn-outline-success btn-sm mb-1 mb-md-0">
+                        <i class="fas fa-money-check-alt me-1"></i> Pay Multiple Bills
                     </a>
                 </div>
             </div>
@@ -105,6 +106,71 @@
                         </div>
                     @endif
                 </div>
+
+                @if ($bill->paymentAllocations->isNotEmpty())
+                    <div class="alert alert-light border mb-4">
+                        <h5 class="mb-3">Group Payment Link</h5>
+                        @foreach ($bill->paymentAllocations as $allocation)
+                            @php $groupPayment = $allocation->payment; @endphp
+                            <div class="mb-3">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <strong>Receipt / Cheque:</strong>
+                                        {{ $groupPayment->receipt_no ?? $groupPayment->cheque_no ?? $groupPayment->transaction_id ?? 'N/A' }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Group Paid Total:</strong>
+                                        ₹{{ number_format((float) $groupPayment->total_paid_amount, 2) }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>This Bill Share:</strong>
+                                        ₹{{ number_format((float) $allocation->allocated_amount, 2) }}
+                                    </div>
+                                </div>
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Bill No</th>
+                                                <th>Bill Amount</th>
+                                                <th>Paid Share</th>
+                                                <th>Interest / Offer</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($groupPayment->allocations as $sibling)
+                                                <tr @class(['table-success' => $sibling->vashi_market_bill_id === $bill->id])>
+                                                    <td>
+                                                        <a href="{{ route('vashi-market.showBillDetails', $sibling->vashi_market_bill_id) }}">
+                                                            {{ $sibling->bill->bill_no ?? ('#'.$sibling->vashi_market_bill_id) }}
+                                                        </a>
+                                                    </td>
+                                                    <td>₹{{ number_format((float) $sibling->bill_amount, 2) }}</td>
+                                                    <td>₹{{ number_format((float) $sibling->allocated_amount, 2) }}</td>
+                                                    <td>
+                                                        @if ((float) $sibling->interest_difference > 0)
+                                                            <span class="text-danger">
+                                                                +₹{{ number_format((float) $sibling->interest_difference, 2) }}
+                                                                ({{ number_format((float) $sibling->interest_percentage, 2) }}%)
+                                                            </span>
+                                                        @elseif ((float) $sibling->interest_difference < 0)
+                                                            <span class="text-success">
+                                                                ₹{{ number_format(abs((float) $sibling->interest_difference), 2) }}
+                                                                ({{ number_format((float) $sibling->interest_percentage, 2) }}%)
+                                                            </span>
+                                                        @else
+                                                            Exact
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
 
                 <hr>
 

@@ -309,6 +309,13 @@
             </div>
             {{-- Session message display area --}}
             <div class="card-body">
+                @if (session('success'))
+                    <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
+                @if (session('error'))
+                    <div class="alert alert-danger">{{ session('error') }}</div>
+                @endif
+
                 <form action="{{ route('vashi-market.index') }}" method="GET" class="mb-4">
                     <div class="row g-3 align-items-end">
                         <div class="col-12 col-lg-4">
@@ -346,7 +353,10 @@
                         </div>
                     </div>
                 </form>
-                <div class="d-flex justify-content-end mb-4">
+                <div class="d-flex justify-content-end gap-2 mb-4 flex-wrap">
+                    <a href="{{ route('vashi-market.payments.create') }}" class="btn btn-success text-nowrap">
+                        <i class="fas fa-money-check-alt me-1"></i> Pay Multiple Bills
+                    </a>
                     <a href="{{ route('vashi-market.create') }}" class="btn btn-primary text-nowrap"><i
                             class="fas fa-plus me-1"></i> Add Bill</a>
                 </div>

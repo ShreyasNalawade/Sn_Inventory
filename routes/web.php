@@ -4,6 +4,7 @@ use App\Http\Controllers\PdfUnlockController;
 use App\Http\Controllers\ProductListController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VashiMarketController;
+use App\Http\Controllers\VashiMarketPaymentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -42,6 +43,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/vashi-market/bills', [VashiMarketController::class, 'index'])->name('vashi-market.index');
     Route::get('/vashi-market/bills/create', [VashiMarketController::class, 'create'])->name('vashi-market.create');
     Route::post('/vashi-market/bills', [VashiMarketController::class, 'store'])->name('vashi-market.store');
+    Route::get('/vashi-market/payments/create', [VashiMarketPaymentController::class, 'create'])->name('vashi-market.payments.create');
+    Route::post('/vashi-market/payments', [VashiMarketPaymentController::class, 'store'])->name('vashi-market.payments.store');
+    Route::get('/vashi-market/payments/unpaid-bills', [VashiMarketPaymentController::class, 'unpaidBills'])->name('vashi-market.payments.unpaid-bills');
     Route::get('/vashi-market/{id}/edit', [VashiMarketController::class, 'editVashiBill'])->name('vashi-market.edit');
     Route::put('/vashi-market/{id}', [VashiMarketController::class, 'updateVashiBill'])->name('vashi-market.update');
     Route::get('vashi-market/{vashiMarketBill}/payment', [VashiMarketController::class, 'showPaymentForm'])->name('vashi-market.payment.form');

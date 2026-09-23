@@ -245,8 +245,11 @@ class VashiMarketController extends Controller
 
     public function showBillDetails(VashiMarketBill $vashiMarketBill)
     {
-        // Eager load the products for the specific bill
-        $vashiMarketBill->load('products');
+        // Eager load the products and any group-payment allocations for the specific bill
+        $vashiMarketBill->load([
+            'products',
+            'paymentAllocations.payment.allocations.bill:id,bill_no,total_bill_amount',
+        ]);
 
         return view('admin.showVashiMarketBill', ['bill' => $vashiMarketBill]);
     }
