@@ -52,22 +52,6 @@
             color: #166534;
         }
 
-        .bill-select-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 0.85rem;
-            overflow: hidden;
-        }
-
-        .bill-select-table th {
-            white-space: nowrap;
-            font-size: 0.82rem;
-        }
-
-        .bill-select-table td {
-            vertical-align: middle;
-            font-size: 0.9rem;
-        }
-
         .interest-input.positive {
             color: #b91c1c;
             font-weight: 600;
@@ -88,40 +72,265 @@
             font-weight: 600;
         }
 
-        @media (max-width: 767.98px) {
-            .bill-select-table thead {
-                display: none;
+        .bill-list-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .select-all-btn,
+        .bill-select-toggle {
+            border: 0;
+            background: transparent;
+            padding: 0;
+            text-align: left;
+        }
+
+        .select-all-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            min-height: 44px;
+            padding: 0.45rem 0.75rem;
+            border-radius: 999px;
+            background: #fff7ed;
+            color: #9a3412;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .bill-pick-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .bill-row {
+            border: 1.5px solid #e5e7eb;
+            border-radius: 1rem;
+            background: #fff;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+            transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+        }
+
+        .bill-row.is-selected {
+            border-color: #16a34a;
+            background: #f0fdf4;
+            box-shadow: 0 6px 18px rgba(22, 163, 74, 0.12);
+        }
+
+        .bill-select-toggle {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            width: 100%;
+            min-height: 72px;
+            padding: 0.95rem 1rem;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .bill-check-ui {
+            flex: 0 0 28px;
+            width: 28px;
+            height: 28px;
+            margin-top: 0.1rem;
+            border: 2px solid #94a3b8;
+            border-radius: 0.55rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            color: transparent;
+            font-size: 0.85rem;
+        }
+
+        .bill-row.is-selected .bill-check-ui {
+            border-color: #16a34a;
+            background: #16a34a;
+            color: #fff;
+        }
+
+        .bill-checkbox {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .bill-select-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .bill-select-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .bill-no-text {
+            display: block;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .bill-date-text {
+            display: block;
+            margin-top: 0.2rem;
+            font-size: 0.82rem;
+            color: #64748b;
+        }
+
+        .bill-amount-chip {
+            flex-shrink: 0;
+            text-align: right;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.7rem;
+            padding: 0.45rem 0.65rem;
+        }
+
+        .bill-row.is-selected .bill-amount-chip {
+            background: #fff;
+            border-color: #bbf7d0;
+        }
+
+        .bill-amount-chip .chip-label {
+            display: block;
+            font-size: 0.68rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .bill-amount-chip .chip-value {
+            display: block;
+            margin-top: 0.1rem;
+            font-size: 0.98rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .bill-products-text {
+            font-size: 0.88rem;
+            color: #334155;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
+        .bill-tap-hint {
+            display: block;
+            margin-top: 0.45rem;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .bill-row.is-selected .bill-tap-hint {
+            color: #15803d;
+        }
+
+        .bill-allocation-panel {
+            display: none;
+            padding: 0 1rem 1rem;
+            border-top: 1px solid #dcfce7;
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        .bill-row.is-selected .bill-allocation-panel {
+            display: block;
+        }
+
+        .bill-allocation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.65rem;
+            padding-top: 0.85rem;
+        }
+
+        .bill-allocation-field label {
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 0.72rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 700;
+        }
+
+        .bill-allocation-field .form-control {
+            min-height: 44px;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .bill-percent-box {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.65rem 0.75rem;
+            border-radius: 0.7rem;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+
+        .bill-percent-box .percent-label {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .bill-percent-box .percent-text {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        @media (min-width: 768px) {
+            .bill-pick-list {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .page-content .card-body {
+                padding: 0.9rem;
             }
 
-            .bill-select-table,
-            .bill-select-table tbody,
-            .bill-select-table tr,
-            .bill-select-table td {
-                display: block;
-                width: 100%;
+            .pay-summary-card {
+                padding: 0.8rem;
             }
 
-            .bill-select-table tr {
-                border-bottom: 1px solid #e5e7eb;
-                padding: 0.85rem 0.75rem;
+            .bill-select-toggle {
+                padding: 0.9rem;
             }
 
-            .bill-select-table td {
-                border: 0;
-                padding: 0.35rem 0;
+            .bill-allocation-panel {
+                padding: 0 0.9rem 0.9rem;
             }
 
-            .bill-select-table td::before {
-                content: attr(data-label);
-                display: block;
-                font-size: 0.72rem;
-                color: #64748b;
-                text-transform: uppercase;
-                margin-bottom: 0.15rem;
+            .save-payment-wrap {
+                position: sticky;
+                bottom: 0.75rem;
+                z-index: 5;
             }
 
-            .bill-select-table td.col-check::before {
-                display: none;
+            .save-payment-wrap .btn {
+                min-height: 48px;
+                box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
             }
         }
     </style>
@@ -255,65 +464,78 @@
                             </div>
                         </div>
 
-                        <div class="bill-select-card mb-4">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0 bill-select-table">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>
-                                                <input type="checkbox" id="select-all-bills" class="form-check-input">
-                                            </th>
-                                            <th>Bill No</th>
-                                            <th>Date</th>
-                                            <th>Products</th>
-                                            <th>Bill Amount</th>
-                                            <th>Paid Share</th>
-                                            <th>Interest / Offer</th>
-                                            <th>%</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($bills as $index => $bill)
-                                            @php
-                                                $products = $bill->products->pluck('product_name')->implode(', ');
-                                            @endphp
-                                            <tr class="bill-row" data-bill-id="{{ $bill->id }}"
-                                                data-bill-amount="{{ (float) $bill->total_bill_amount }}">
-                                                <td class="col-check" data-label="Select">
-                                                    <input type="checkbox" class="form-check-input bill-checkbox"
-                                                        value="{{ $bill->id }}">
-                                                    <input type="hidden" class="bill-id-input" disabled
-                                                        name="bills[{{ $index }}][id]" value="{{ $bill->id }}">
-                                                </td>
-                                                <td data-label="Bill No"><strong>{{ $bill->bill_no }}</strong></td>
-                                                <td data-label="Date">
-                                                    {{ \Carbon\Carbon::parse($bill->bill_date)->format('d/m/Y') }}
-                                                </td>
-                                                <td data-label="Products">{{ $products ?: '-' }}</td>
-                                                <td data-label="Bill Amount">
-                                                    ₹{{ number_format((float) $bill->total_bill_amount, 2) }}
-                                                </td>
-                                                <td data-label="Paid Share">
+                        <div class="mb-4">
+                            <div class="bill-list-toolbar">
+                                <h5 class="mb-0">Select Bills</h5>
+                                <button type="button" class="select-all-btn" id="select-all-bills">
+                                    <i class="fas fa-check-double"></i>
+                                    <span id="select-all-label">Select All</span>
+                                </button>
+                            </div>
+
+                            <div class="bill-pick-list">
+                                @foreach ($bills as $index => $bill)
+                                    @php
+                                        $products = $bill->products->pluck('product_name')->implode(', ');
+                                    @endphp
+                                    <div class="bill-row" data-bill-id="{{ $bill->id }}"
+                                        data-bill-amount="{{ (float) $bill->total_bill_amount }}">
+                                        <input type="checkbox" class="bill-checkbox" value="{{ $bill->id }}" tabindex="-1">
+                                        <input type="hidden" class="bill-id-input" disabled
+                                            name="bills[{{ $index }}][id]" value="{{ $bill->id }}">
+
+                                        <button type="button" class="bill-select-toggle" aria-pressed="false">
+                                            <span class="bill-check-ui" aria-hidden="true">
+                                                <i class="fas fa-check"></i>
+                                            </span>
+                                            <span class="bill-select-main">
+                                                <span class="bill-select-top">
+                                                    <span>
+                                                        <span class="bill-no-text">Bill #{{ $bill->bill_no }}</span>
+                                                        <span class="bill-date-text">
+                                                            <i class="fas fa-calendar-alt me-1"></i>
+                                                            {{ \Carbon\Carbon::parse($bill->bill_date)->format('d/m/Y') }}
+                                                        </span>
+                                                    </span>
+                                                    <span class="bill-amount-chip">
+                                                        <span class="chip-label">Bill Amount</span>
+                                                        <span class="chip-value">₹{{ number_format((float) $bill->total_bill_amount, 2) }}</span>
+                                                    </span>
+                                                </span>
+                                                <span class="bill-products-text">
+                                                    <i class="fas fa-box me-1 text-muted"></i>
+                                                    {{ $products ?: 'No products' }}
+                                                </span>
+                                                <span class="bill-tap-hint">Tap card to select</span>
+                                            </span>
+                                        </button>
+
+                                        <div class="bill-allocation-panel">
+                                            <div class="bill-allocation-grid">
+                                                <div class="bill-allocation-field">
+                                                    <label>Paid Share</label>
                                                     <input type="number" step="0.01" min="0"
-                                                        class="form-control form-control-sm allocated-input" disabled
+                                                        class="form-control allocated-input" disabled
                                                         name="bills[{{ $index }}][allocated_amount]" value="0.00">
-                                                </td>
-                                                <td data-label="Interest / Offer">
+                                                </div>
+                                                <div class="bill-allocation-field">
+                                                    <label>Interest / Offer</label>
                                                     <input type="number" step="0.01"
-                                                        class="form-control form-control-sm interest-input" disabled
+                                                        class="form-control interest-input" disabled
                                                         name="bills[{{ $index }}][interest_difference]" value="0.00">
-                                                </td>
-                                                <td data-label="%">
+                                                </div>
+                                                <div class="bill-percent-box">
+                                                    <span class="percent-label">Percentage</span>
                                                     <span class="percent-text">0.00%</span>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
 
-                        <div class="d-grid d-md-flex justify-content-md-end gap-2">
+                        <div class="d-grid save-payment-wrap">
                             <button type="submit" id="save-payment-btn" class="btn btn-primary" disabled>
                                 <i class="fas fa-save me-1"></i> Save Group Payment
                             </button>
@@ -359,7 +581,10 @@
                 const idInput = row.querySelector('.bill-id-input');
                 const allocatedInput = row.querySelector('.allocated-input');
                 const interestInput = row.querySelector('.interest-input');
+                const toggleBtn = row.querySelector('.bill-select-toggle');
+                const hint = row.querySelector('.bill-tap-hint');
 
+                checkbox.checked = enabled;
                 idInput.disabled = !enabled;
                 allocatedInput.disabled = !enabled;
                 interestInput.disabled = !enabled;
@@ -371,7 +596,26 @@
                     interestInput.classList.remove('positive', 'negative');
                 }
 
-                checkbox.closest('tr').classList.toggle('table-active', enabled);
+                row.classList.toggle('is-selected', enabled);
+                toggleBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+                if (hint) {
+                    hint.textContent = enabled ? 'Selected · tap again to unselect' : 'Tap card to select';
+                }
+            };
+
+            const updateSelectAllLabel = () => {
+                const allRows = document.querySelectorAll('.bill-row');
+                const selectedCount = getSelectedRows().length;
+                const label = document.getElementById('select-all-label');
+                if (!label) {
+                    return;
+                }
+
+                if (selectedCount > 0 && selectedCount === allRows.length) {
+                    label.textContent = 'Unselect All';
+                } else {
+                    label.textContent = 'Select All';
+                }
             };
 
             const updateInterestStyle = (interestInput, interest) => {
@@ -467,20 +711,24 @@
                 }
 
                 saveBtn.disabled = !canSave;
+                updateSelectAllLabel();
             };
 
-            document.querySelectorAll('.bill-checkbox').forEach((checkbox) => {
-                checkbox.addEventListener('change', () => {
-                    const row = checkbox.closest('.bill-row');
-                    setRowEnabled(row, checkbox.checked);
+            document.querySelectorAll('.bill-select-toggle').forEach((toggleBtn) => {
+                toggleBtn.addEventListener('click', () => {
+                    const row = toggleBtn.closest('.bill-row');
+                    const checkbox = row.querySelector('.bill-checkbox');
+                    setRowEnabled(row, !checkbox.checked);
                     applyProportionalSplit();
                 });
             });
 
-            selectAll?.addEventListener('change', () => {
-                document.querySelectorAll('.bill-checkbox').forEach((checkbox) => {
-                    checkbox.checked = selectAll.checked;
-                    setRowEnabled(checkbox.closest('.bill-row'), selectAll.checked);
+            selectAll?.addEventListener('click', () => {
+                const allRows = Array.from(document.querySelectorAll('.bill-row'));
+                const shouldSelectAll = getSelectedRows().length !== allRows.length;
+
+                allRows.forEach((row) => {
+                    setRowEnabled(row, shouldSelectAll);
                 });
                 applyProportionalSplit();
             });
