@@ -63,9 +63,9 @@
                         </div>
 
                         <div class="col-md-4 mb-3">
-                            <label>Total Bill Amount</label>
-                            <input type="number" step="0.01" name="total_bill_amount" class="form-control"
-                                value="{{ old('total_bill_amount', $bill->total_bill_amount) }}">
+                            <label for="total-bill-amount">Total Bill Amount</label>
+                            <input type="number" step="0.01" name="total_bill_amount" id="total-bill-amount"
+                                class="form-control" value="{{ old('total_bill_amount', $bill->total_bill_amount) }}">
                         </div>
                     </div>
 
@@ -92,8 +92,8 @@
                             </div>
 
                             <div class="col-md-4 mb-3">
-                                <label>Paid Amount</label>
-                                <input type="number" step="0.01" name="paid_amount" class="form-control"
+                                <label for="paid-amount">Paid Amount</label>
+                                <input type="number" step="0.01" name="paid_amount" id="paid-amount" class="form-control"
                                     value="{{ old('paid_amount', $bill->paid_amount) }}">
                             </div>
 
@@ -113,6 +113,37 @@
                                 <label>Receipt No</label>
                                 <input type="text" name="receipt_no" class="form-control"
                                     value="{{ old('receipt_no', $bill->receipt_no) }}">
+                            </div>
+
+                            @php
+                                $differenceValue = old('payment_difference');
+                                if ($differenceValue === null) {
+                                    $paidForDifference = old('paid_amount', $bill->paid_amount);
+                                    $totalForDifference = old('total_bill_amount', $bill->total_bill_amount);
+                                    if ($paidForDifference !== null && $paidForDifference !== '' && $totalForDifference !== null && $totalForDifference !== '') {
+                                        $differenceValue = round((float) $paidForDifference - (float) $totalForDifference, 2);
+                                    } else {
+                                        $differenceValue = 0;
+                                    }
+                                }
+                            @endphp
+                            <div class="col-12 mb-2">
+                                <div class="payment-difference-card" id="payment-difference-card">
+                                    <div class="row g-3">
+                                        <div class="col-6 col-md-4">
+                                            <label for="payment-difference">Interest / Offer</label>
+                                            <input type="number" step="0.01" class="form-control" id="payment-difference"
+                                                name="payment_difference"
+                                                value="{{ number_format((float) $differenceValue, 2, '.', '') }}">
+                                        </div>
+                                        <div class="col-6 col-md-4">
+                                            <label for="payment-difference-percentage">Percentage</label>
+                                            <input type="text" class="form-control" id="payment-difference-percentage"
+                                                value="0.00%" readonly>
+                                        </div>
+                                    </div>
+                                    <span id="payment-difference-status"></span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -187,15 +218,74 @@
 
     {{-- JS Section --}}
     <script>
-        // Toggle Payment Section
-        document.getElementById('isPaidToggle').addEventListener('change', function () {
-            const paymentSection = document.getElementById('payment-section');
-            if (this.checked) {
-                paymentSection.style.display = 'block';
+        const isPaidToggle = document.getElementById('isPaidToggle');
+        const paymentSection = document.getElementById('payment-section');
+        const totalBillAmountInput = document.getElementById('total-bill-amount');
+        const paidAmountInput = document.getElementById('paid-amount');
+        const paymentDifferenceInput = document.getElementById('payment-difference');
+        const paymentDifferencePercentage = document.getElementById('payment-difference-percentage');
+        const paymentDifferenceStatus = document.getElementById('payment-difference-status');
+        const paymentDifferenceCard = document.getElementById('payment-difference-card');
+
+        const formatAmount = (amount) => Math.abs(amount).toFixed(2);
+
+        const refreshDifferenceDisplay = () => {
+            const totalBillAmount = parseFloat(totalBillAmountInput.value);
+            const difference = parseFloat(paymentDifferenceInput.value);
+            const safeDifference = Number.isFinite(difference) ? difference : 0;
+            const percentage = Number.isFinite(totalBillAmount) && totalBillAmount > 0
+                ? (Math.abs(safeDifference) / totalBillAmount) * 100
+                : 0;
+
+            paymentDifferencePercentage.value = `${percentage.toFixed(2)}%`;
+            paymentDifferenceInput.classList.remove('difference-interest', 'difference-offer', 'difference-even');
+            paymentDifferenceCard.classList.remove('is-interest', 'is-offer', 'is-even');
+
+            if (safeDifference > 0) {
+                paymentDifferenceInput.classList.add('difference-interest');
+                paymentDifferenceCard.classList.add('is-interest');
+                paymentDifferenceStatus.textContent =
+                    `Interest paid: +₹${formatAmount(safeDifference)} (${percentage.toFixed(2)}%)`;
+            } else if (safeDifference < 0) {
+                paymentDifferenceInput.classList.add('difference-offer');
+                paymentDifferenceCard.classList.add('is-offer');
+                paymentDifferenceStatus.textContent =
+                    `Offer received: ₹${formatAmount(safeDifference)} (${percentage.toFixed(2)}%)`;
             } else {
-                paymentSection.style.display = 'none';
+                paymentDifferenceInput.classList.add('difference-even');
+                paymentDifferenceCard.classList.add('is-even');
+                paymentDifferenceStatus.textContent = 'Settled at the exact bill amount (0.00%).';
+            }
+        };
+
+        const calculateFromAmounts = () => {
+            const totalBillAmount = parseFloat(totalBillAmountInput.value);
+            const paidAmount = parseFloat(paidAmountInput.value);
+
+            if (!Number.isFinite(totalBillAmount) || !Number.isFinite(paidAmount) || totalBillAmount <= 0) {
+                paymentDifferenceInput.value = '0.00';
+                refreshDifferenceDisplay();
+                if (!Number.isFinite(paidAmount)) {
+                    paymentDifferenceStatus.textContent = 'Enter the paid amount to calculate interest or offer.';
+                }
+                return;
+            }
+
+            paymentDifferenceInput.value = (paidAmount - totalBillAmount).toFixed(2);
+            refreshDifferenceDisplay();
+        };
+
+        isPaidToggle.addEventListener('change', function () {
+            paymentSection.style.display = this.checked ? 'block' : 'none';
+            if (this.checked) {
+                calculateFromAmounts();
             }
         });
+
+        totalBillAmountInput.addEventListener('input', calculateFromAmounts);
+        paidAmountInput.addEventListener('input', calculateFromAmounts);
+        paymentDifferenceInput.addEventListener('input', refreshDifferenceDisplay);
+        refreshDifferenceDisplay();
 
         // Add New Product Row
         document.getElementById('add-product').addEventListener('click', function () {
@@ -265,6 +355,75 @@
             width: 50px;
             height: 25px;
             cursor: pointer;
+        }
+
+        .payment-difference-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            background: #f8fafc;
+            padding: 0.85rem 0.9rem 0.75rem;
+        }
+
+        .payment-difference-card .form-control {
+            font-weight: 700;
+        }
+
+        .payment-difference-card.is-interest {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .payment-difference-card.is-offer {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .payment-difference-card .form-control.difference-interest {
+            color: #b91c1c;
+            border-color: #fca5a5;
+            background: #fff;
+        }
+
+        .payment-difference-card .form-control.difference-offer {
+            color: #15803d;
+            border-color: #86efac;
+            background: #fff;
+        }
+
+        .payment-difference-card .form-control.difference-even {
+            color: #475569;
+            border-color: #cbd5e1;
+            background: #fff;
+        }
+
+        #payment-difference-status {
+            display: block;
+            margin-top: 0.65rem;
+            font-size: 0.92rem;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .payment-difference-card.is-interest #payment-difference-status {
+            color: #b91c1c;
+        }
+
+        .payment-difference-card.is-offer #payment-difference-status {
+            color: #15803d;
+        }
+
+        .payment-difference-card.is-even #payment-difference-status {
+            color: #475569;
+        }
+
+        @media (max-width: 575.98px) {
+            .payment-difference-card {
+                padding: 0.7rem 0.65rem;
+            }
+
+            #payment-difference-status {
+                font-size: 0.82rem;
+            }
         }
     </style>
     <script>

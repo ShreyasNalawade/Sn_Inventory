@@ -253,6 +253,18 @@ class VashiMarketController extends Controller
 
         DB::transaction(function () use ($bill, $request) {
             $isPaid = $request->has('is_paid');
+            $submittedDifference = $request->input('payment_difference');
+
+            if (! $isPaid) {
+                $paymentDifference = null;
+            } elseif ($submittedDifference === null || $submittedDifference === '') {
+                $paymentDifference = round(
+                    (float) $request->input('paid_amount') - (float) $request->input('total_bill_amount'),
+                    2
+                );
+            } else {
+                $paymentDifference = round((float) $submittedDifference, 2);
+            }
 
             $bill->update($request->only([
                 'bill_date',
@@ -269,9 +281,7 @@ class VashiMarketController extends Controller
                 'paid_amount',
             ]) + [
                 'is_paid' => $isPaid,
-                'payment_difference' => $isPaid
-                    ? ($request->input('payment_difference') ?? 0)
-                    : null,
+                'payment_difference' => $paymentDifference,
             ]);
 
             $bill->products()->delete(); // Remove old
