@@ -199,7 +199,58 @@
             color: #475569;
         }
 
+        .unpaid-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+
+        .unpaid-summary-item {
+            min-width: 0;
+            padding: 0.85rem 1rem;
+            border-radius: 0.75rem;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+        }
+
+        .unpaid-summary-label {
+            display: block;
+            font-size: 0.72rem;
+            color: #92400e;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.2rem;
+        }
+
+        .unpaid-summary-value {
+            display: block;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #c2410c;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+        }
+
         @media (max-width: 575.98px) {
+            .unpaid-summary {
+                grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+                gap: 0.45rem;
+            }
+
+            .unpaid-summary-item {
+                padding: 0.7rem 0.55rem;
+            }
+
+            .unpaid-summary-label {
+                font-size: 0.62rem;
+                letter-spacing: 0.02em;
+            }
+
+            .unpaid-summary-value {
+                font-size: clamp(0.78rem, 3.6vw, 1rem);
+                white-space: nowrap;
+            }
+
             .bill-card .card-body {
                 padding: 0.9rem;
             }
@@ -315,6 +366,17 @@
                 @if (session('error'))
                     <div class="alert alert-danger">{{ session('error') }}</div>
                 @endif
+
+                <div class="unpaid-summary mb-4">
+                    <div class="unpaid-summary-item">
+                        <span class="unpaid-summary-label">Unpaid Bills</span>
+                        <span class="unpaid-summary-value">{{ number_format((int) $unpaidSummary->bill_count) }}</span>
+                    </div>
+                    <div class="unpaid-summary-item">
+                        <span class="unpaid-summary-label">Unpaid Amount</span>
+                        <span class="unpaid-summary-value">₹{{ number_format((float) $unpaidSummary->bill_amount, 2) }}</span>
+                    </div>
+                </div>
 
                 <form action="{{ route('vashi-market.index') }}" method="GET" class="mb-4">
                     <div class="row g-3 align-items-end">

@@ -321,6 +321,40 @@
             #product-container { gap: 18px; }
             #product-container .delete-btn .delete-label { display: none; }
         }
+        .name-suggest-menu {
+            position: fixed;
+            z-index: 1080;
+            max-height: 240px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #d8e0ea;
+            border-radius: 10px;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
+            padding: 4px;
+        }
+        .name-suggest-item {
+            display: block;
+            width: 100%;
+            text-align: left;
+            border: 0;
+            background: transparent;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            color: #0f172a;
+            cursor: pointer;
+        }
+        .name-suggest-item.is-active,
+        .name-suggest-item:hover {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+        .name-suggest-empty {
+            padding: 8px 10px;
+            color: #64748b;
+            font-size: 0.82rem;
+            line-height: 1.35;
+        }
     </style>
     <div class="page-content container-fluid">
         <div class="card shadow-sm">
@@ -380,7 +414,8 @@
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="party-name" class="form-label">Party Name</label>
-                                <input type="text" class="form-control" id="party-name" name="party_name" required />
+                                <input type="text" class="form-control js-suggest" id="party-name" name="party_name"
+                                    data-suggest="party_name" autocomplete="off" required />
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="dalal" class="form-label">Dalal</label>
@@ -516,11 +551,13 @@
                     <div class="row g-2">
                         <div class="col-12 col-md-6 col-lg-4">
                             <label class="form-label">Product</label>
-                            <input type="text" class="form-control product-name" name="products[][product_name]" required />
+                            <input type="text" class="form-control product-name js-suggest" name="products[][product_name]"
+                                data-suggest="product_name" autocomplete="off" required />
                         </div>
                         <div class="col-12 col-md-6 col-lg-4">
                             <label class="form-label">Brand Name</label>
-                            <input type="text" class="form-control brand-name" name="products[][brand_name]" />
+                            <input type="text" class="form-control brand-name js-suggest" name="products[][brand_name]"
+                                data-suggest="brand_name" autocomplete="off" />
                         </div>
                     </div>
                 </div>
@@ -730,6 +767,180 @@
             };
 
             addProductBtn.addEventListener("click", addProduct);
+
+            const suggestUrl = @json(route('vashi-market.suggestions', [], false));
+            const suggestMenu = document.createElement("div");
+            suggestMenu.className = "name-suggest-menu";
+            suggestMenu.hidden = true;
+            document.body.appendChild(suggestMenu);
+
+            let activeSuggestInput = null;
+            let suggestItems = [];
+            let suggestIndex = -1;
+            let suggestTimer = null;
+            let suggestAbort = null;
+
+            const positionSuggestMenu = () => {
+                if (!activeSuggestInput || suggestMenu.hidden) {
+                    return;
+                }
+                if (!activeSuggestInput.isConnected) {
+                    closeSuggestMenu();
+                    return;
+                }
+                const rect = activeSuggestInput.getBoundingClientRect();
+                const menuHeight = suggestMenu.offsetHeight || 240;
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const openAbove = spaceBelow < Math.min(menuHeight, 180) && rect.top > spaceBelow;
+                suggestMenu.style.width = `${rect.width}px`;
+                suggestMenu.style.left = `${rect.left}px`;
+                suggestMenu.style.top = openAbove
+                    ? `${Math.max(8, rect.top - menuHeight - 4)}px`
+                    : `${rect.bottom + 4}px`;
+            };
+
+            const closeSuggestMenu = () => {
+                suggestMenu.hidden = true;
+                suggestMenu.innerHTML = "";
+                suggestItems = [];
+                suggestIndex = -1;
+            };
+
+            const highlightSuggestItem = (index) => {
+                const buttons = suggestMenu.querySelectorAll(".name-suggest-item");
+                buttons.forEach((button, i) => button.classList.toggle("is-active", i === index));
+                if (buttons[index]) {
+                    buttons[index].scrollIntoView({ block: "nearest" });
+                }
+                suggestIndex = index;
+            };
+
+            const selectSuggestion = (name) => {
+                if (!activeSuggestInput) {
+                    return;
+                }
+                activeSuggestInput.value = name;
+                closeSuggestMenu();
+                activeSuggestInput.focus();
+            };
+
+            const renderSuggestMenu = (items) => {
+                suggestMenu.innerHTML = "";
+                suggestItems = items;
+                suggestIndex = -1;
+
+                if (!items.length) {
+                    const empty = document.createElement("div");
+                    empty.className = "name-suggest-empty";
+                    empty.textContent = "No saved match. Keep typing to add this as a new name.";
+                    suggestMenu.appendChild(empty);
+                    suggestMenu.hidden = false;
+                    positionSuggestMenu();
+                    return;
+                }
+
+                items.forEach((name) => {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.className = "name-suggest-item";
+                    button.textContent = name;
+                    button.addEventListener("mousedown", (event) => {
+                        event.preventDefault();
+                        selectSuggestion(name);
+                    });
+                    suggestMenu.appendChild(button);
+                });
+
+                suggestMenu.hidden = false;
+                positionSuggestMenu();
+            };
+
+            const fetchSuggestions = async (input) => {
+                const query = input.value.trim();
+                const field = input.dataset.suggest;
+                if (!field || query.length < 1) {
+                    closeSuggestMenu();
+                    return;
+                }
+
+                if (suggestAbort) {
+                    suggestAbort.abort();
+                }
+                suggestAbort = new AbortController();
+
+                const url = `${suggestUrl}?field=${encodeURIComponent(field)}&q=${encodeURIComponent(query)}`;
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            "Accept": "application/json",
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        signal: suggestAbort.signal,
+                    });
+                    if (!response.ok || activeSuggestInput !== input) {
+                        return;
+                    }
+                    const data = await response.json();
+                    if (activeSuggestInput !== input || input.value.trim() !== query) {
+                        return;
+                    }
+                    renderSuggestMenu(Array.isArray(data.items) ? data.items : []);
+                } catch (error) {
+                    if (error.name !== "AbortError") {
+                        closeSuggestMenu();
+                    }
+                }
+            };
+
+            const queueSuggestions = (input) => {
+                activeSuggestInput = input;
+                clearTimeout(suggestTimer);
+                suggestTimer = setTimeout(() => fetchSuggestions(input), 180);
+            };
+
+            document.addEventListener("input", (event) => {
+                const input = event.target.closest(".js-suggest");
+                if (!input) {
+                    return;
+                }
+                queueSuggestions(input);
+            });
+
+            document.addEventListener("focusin", (event) => {
+                const input = event.target.closest(".js-suggest");
+                if (!input || input.value.trim().length < 1) {
+                    return;
+                }
+                queueSuggestions(input);
+            });
+
+            document.addEventListener("keydown", (event) => {
+                if (!activeSuggestInput || document.activeElement !== activeSuggestInput || suggestMenu.hidden) {
+                    return;
+                }
+                if (event.key === "ArrowDown" && suggestItems.length) {
+                    event.preventDefault();
+                    highlightSuggestItem(Math.min(suggestIndex + 1, suggestItems.length - 1));
+                } else if (event.key === "ArrowUp" && suggestItems.length) {
+                    event.preventDefault();
+                    highlightSuggestItem(Math.max(suggestIndex - 1, 0));
+                } else if (event.key === "Enter" && suggestIndex >= 0) {
+                    event.preventDefault();
+                    selectSuggestion(suggestItems[suggestIndex]);
+                } else if (event.key === "Escape") {
+                    closeSuggestMenu();
+                }
+            });
+
+            document.addEventListener("click", (event) => {
+                if (event.target.closest(".js-suggest") || event.target.closest(".name-suggest-menu")) {
+                    return;
+                }
+                closeSuggestMenu();
+            });
+
+            window.addEventListener("resize", positionSuggestMenu);
+            window.addEventListener("scroll", positionSuggestMenu, true);
 
             // Override form submission to show confirmation first.
             billForm.addEventListener("submit", (e) => {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\PdfUnlockController;
 use App\Http\Controllers\ProductListController;
 use App\Http\Controllers\UserController;
@@ -42,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     // Vashi Market Routes
     Route::get('/vashi-market/bills', [VashiMarketController::class, 'index'])->name('vashi-market.index');
     Route::get('/vashi-market/bills/create', [VashiMarketController::class, 'create'])->name('vashi-market.create');
+    Route::get('/vashi-market/suggestions', [VashiMarketController::class, 'suggestions'])->name('vashi-market.suggestions');
     Route::post('/vashi-market/bills', [VashiMarketController::class, 'store'])->name('vashi-market.store');
     Route::get('/vashi-market/payments/create', [VashiMarketPaymentController::class, 'create'])->name('vashi-market.payments.create');
     Route::post('/vashi-market/payments', [VashiMarketPaymentController::class, 'store'])->name('vashi-market.payments.store');
@@ -50,11 +52,15 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/vashi-market/{id}', [VashiMarketController::class, 'updateVashiBill'])->name('vashi-market.update');
     Route::get('vashi-market/{vashiMarketBill}/payment', [VashiMarketController::class, 'showPaymentForm'])->name('vashi-market.payment.form');
     Route::get('vashi-market/details/{vashiMarketBill}', [VashiMarketController::class, 'showBillDetails'])->name('vashi-market.showBillDetails');
-   
-   
-   // pdf unlocker routes
-    Route::get('/pdf-unlocker',[PdfUnlockController::class, 'index'])->name('pdf.unlocker');
 
-    Route::post('/pdf-unlock',[PdfUnlockController::class, 'unlock'])->name('pdf.unlock');
-   
+    Route::get('/ai-chat', [AiChatController::class, 'index'])->name('admin.ai-chat');
+    Route::post('/ai-chat/ask', [AiChatController::class, 'ask'])
+        ->middleware('throttle:30,1')
+        ->name('admin.ai-chat.ask');
+
+    // pdf unlocker routes
+    Route::get('/pdf-unlocker', [PdfUnlockController::class, 'index'])->name('pdf.unlocker');
+
+    Route::post('/pdf-unlock', [PdfUnlockController::class, 'unlock'])->name('pdf.unlock');
+
 });

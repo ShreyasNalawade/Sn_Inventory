@@ -19,6 +19,41 @@ class VashiMarketController extends Controller
     }
 
     /**
+     * Distinct party, product, and brand names for the bill form suggestions.
+     */
+    public function suggestions(Request $request)
+    {
+        $fields = [
+            'party_name' => [VashiMarketBill::class, 'party_name'],
+            'product_name' => [VashiMarketBillProduct::class, 'product_name'],
+            'brand_name' => [VashiMarketBillProduct::class, 'brand_name'],
+        ];
+
+        $field = (string) $request->query('field', '');
+        $term = trim((string) $request->query('q', ''));
+
+        if (! isset($fields[$field]) || $term === '') {
+            return response()->json(['items' => []]);
+        }
+
+        [$model, $column] = $fields[$field];
+        $safeTerm = addcslashes(mb_substr($term, 0, 100), '\\%_');
+
+        $items = $model::query()
+            ->where($column, 'like', '%'.$safeTerm.'%')
+            ->whereNotNull($column)
+            ->where($column, '!=', '')
+            ->distinct()
+            ->orderByRaw("CASE WHEN {$column} LIKE ? THEN 0 ELSE 1 END", [$safeTerm.'%'])
+            ->orderBy($column)
+            ->limit(15)
+            ->pluck($column)
+            ->values();
+
+        return response()->json(['items' => $items]);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
@@ -92,7 +127,12 @@ class VashiMarketController extends Controller
             ]);
         }
 
-        return view('admin.vashiMarketBillList', compact('bills'));
+        $unpaidSummary = VashiMarketBill::query()
+            ->where('is_paid', false)
+            ->selectRaw('COUNT(*) as bill_count, COALESCE(SUM(total_bill_amount), 0) as bill_amount')
+            ->first();
+
+        return view('admin.vashiMarketBillList', compact('bills', 'unpaidSummary'));
     }
 
     /**

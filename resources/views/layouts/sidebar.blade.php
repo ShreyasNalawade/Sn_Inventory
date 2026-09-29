@@ -22,6 +22,14 @@
             </a>
         </li>
         <li class="nav-item">
+            <a class="sidebar-link {{ request()->routeIs('admin.ai-chat') ? 'active' : '' }}"
+                href="{{ route('admin.ai-chat') }}"
+                @if (request()->routeIs('admin.ai-chat')) aria-current="page" @endif>
+                <i class="fas fa-comment-dots" aria-hidden="true"></i>
+                <span class="sidebar-link-label">Store Assistant</span>
+            </a>
+        </li>
+        <li class="nav-item">
             <a class="sidebar-link" href="#">
                 <i class="fas fa-users" aria-hidden="true"></i>
                 <span class="sidebar-link-label">Oil Bill Details</span>
