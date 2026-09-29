@@ -231,6 +231,14 @@
             overflow-wrap: anywhere;
         }
 
+        .unpaid-summary-note {
+            grid-column: 1 / -1;
+            margin: 0;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #92400e;
+        }
+
         @media (max-width: 575.98px) {
             .unpaid-summary {
                 grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
@@ -370,12 +378,15 @@
                 <div class="unpaid-summary mb-4">
                     <div class="unpaid-summary-item">
                         <span class="unpaid-summary-label">Unpaid Bills</span>
-                        <span class="unpaid-summary-value">{{ number_format((int) $unpaidSummary->bill_count) }}</span>
+                        <span class="unpaid-summary-value" id="unpaid-bill-count">{{ $unpaidSummary['count'] }}</span>
                     </div>
                     <div class="unpaid-summary-item">
                         <span class="unpaid-summary-label">Unpaid Amount</span>
-                        <span class="unpaid-summary-value">₹{{ number_format((float) $unpaidSummary->bill_amount, 2) }}</span>
+                        <span class="unpaid-summary-value" id="unpaid-bill-amount">{{ $unpaidSummary['amount'] }}</span>
                     </div>
+                    <p class="unpaid-summary-note" id="unpaid-summary-note" @if ($unpaidSummary['note'] === '') hidden @endif>
+                        {{ $unpaidSummary['note'] }}
+                    </p>
                 </div>
 
                 <form action="{{ route('vashi-market.index') }}" method="GET" class="mb-4">
@@ -462,6 +473,9 @@
             const paymentStatusInput = document.getElementById('payment_status');
             const startDateInput = document.getElementById('start_date');
             const endDateInput = document.getElementById('end_date');
+            const unpaidBillCount = document.getElementById('unpaid-bill-count');
+            const unpaidBillAmount = document.getElementById('unpaid-bill-amount');
+            const unpaidSummaryNote = document.getElementById('unpaid-summary-note');
             const dataList = document.getElementById('data-list');
             const skeletonLoader = document.getElementById('skeleton-loader');
             const noResultsMessage = document.getElementById('no-results');
@@ -570,6 +584,13 @@
 
                     if (result.html) {
                         skeletonLoader.insertAdjacentHTML('beforebegin', result.html);
+                    }
+
+                    if (reset && result.unpaid_summary) {
+                        unpaidBillCount.textContent = result.unpaid_summary.count;
+                        unpaidBillAmount.textContent = result.unpaid_summary.amount;
+                        unpaidSummaryNote.textContent = result.unpaid_summary.note || '';
+                        unpaidSummaryNote.hidden = !result.unpaid_summary.note;
                     }
 
                     nextCursor = result.next_cursor || null;

@@ -119,20 +119,88 @@ class VashiMarketController extends Controller
 
         if ($request->expectsJson() || $request->ajax()) {
             $nextCursor = $bills->nextCursor();
-
-            return response()->json([
+            $payload = [
                 'html' => view('admin.vashiMarketBillCards', compact('bills'))->render(),
                 'has_more' => $bills->hasMorePages(),
                 'next_cursor' => $nextCursor ? $nextCursor->encode() : null,
-            ]);
+            ];
+
+            // Infinite scroll repeats the same filters, so the unpaid totals
+            // only need to be calculated for the first page of a filter.
+            if (! $request->filled('cursor')) {
+                $payload['unpaid_summary'] = $this->unpaidSummaryPayload($request);
+            }
+
+            return response()->json($payload);
         }
 
-        $unpaidSummary = VashiMarketBill::query()
-            ->where('is_paid', false)
+        $unpaidSummary = $this->unpaidSummaryPayload($request);
+
+        return view('admin.vashiMarketBillList', compact('bills', 'unpaidSummary'));
+    }
+
+    /**
+     * Unpaid count and amount for the selected bill dates.
+     * With no dates, this is every unpaid bill so far.
+     *
+     * @return array{count: string, amount: string, note: string}
+     */
+    private function unpaidSummaryPayload(Request $request): array
+    {
+        $query = VashiMarketBill::query()->where('is_paid', false);
+        $startDate = $this->filterDate($request->input('start_date'));
+        $endDate = $this->filterDate($request->input('end_date'));
+
+        if ($startDate) {
+            $query->where('bill_date', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $query->where('bill_date', '<=', $endDate);
+        }
+
+        $summary = $query
             ->selectRaw('COUNT(*) as bill_count, COALESCE(SUM(total_bill_amount), 0) as bill_amount')
             ->first();
 
-        return view('admin.vashiMarketBillList', compact('bills', 'unpaidSummary'));
+        return [
+            'count' => number_format((int) $summary->bill_count),
+            'amount' => '₹'.number_format((float) $summary->bill_amount, 2),
+            'note' => $this->unpaidSummaryNote($startDate, $endDate),
+        ];
+    }
+
+    private function unpaidSummaryNote(?string $startDate, ?string $endDate): string
+    {
+        $from = $startDate ? date('d/m/Y', strtotime($startDate)) : null;
+        $to = $endDate ? date('d/m/Y', strtotime($endDate)) : null;
+
+        if ($from && $to) {
+            return "Unpaid bills from {$from} to {$to}";
+        }
+
+        if ($from) {
+            return "Unpaid bills from {$from}";
+        }
+
+        if ($to) {
+            return "Unpaid bills up to {$to}";
+        }
+
+        return '';
+    }
+
+    private function filterDate(mixed $value): ?string
+    {
+        $value = trim((string) $value);
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return null;
+        }
+
+        [$year, $month, $day] = array_map('intval', explode('-', $value));
+
+        return checkdate($month, $day, $year) ? $value : null;
     }
 
     /**
