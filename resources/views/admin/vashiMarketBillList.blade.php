@@ -239,6 +239,61 @@
             color: #92400e;
         }
 
+        .bill-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .bill-toolbar-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+
+        #toggle-filters {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        #toggle-filters.is-open {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+
+        .filter-active-mark {
+            width: 0.45rem;
+            height: 0.45rem;
+            border-radius: 50%;
+            background: #ea580c;
+        }
+
+        @media (max-width: 575.98px) {
+            .bill-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .bill-toolbar-actions {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .bill-toolbar-actions .btn,
+            #toggle-filters {
+                justify-content: center;
+            }
+
+            .bill-toolbar-actions .btn {
+                flex: 1;
+            }
+        }
+
         @media (max-width: 575.98px) {
             .unpaid-summary {
                 grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
@@ -389,7 +444,35 @@
                     </p>
                 </div>
 
-                <form action="{{ route('vashi-market.index') }}" method="GET" class="mb-4">
+                @php
+                    $filtersOpen = request()->filled('search')
+                        || request()->filled('payment_status')
+                        || request()->filled('start_date')
+                        || request()->filled('end_date');
+                @endphp
+
+                <div class="bill-toolbar mb-3">
+                    <button type="button" class="btn btn-outline-secondary {{ $filtersOpen ? 'is-open' : '' }}"
+                        id="toggle-filters" aria-expanded="{{ $filtersOpen ? 'true' : 'false' }}"
+                        aria-controls="bill-filters">
+                        <i class="fas fa-filter"></i>
+                        <span>Filters</span>
+                        @if ($filtersOpen)
+                            <span class="filter-active-mark" aria-hidden="true"></span>
+                        @endif
+                    </button>
+                    <div class="bill-toolbar-actions">
+                        <a href="{{ route('vashi-market.payments.create') }}" class="btn btn-success text-nowrap">
+                            <i class="fas fa-money-check-alt me-1"></i> Pay Multiple Bills
+                        </a>
+                        <a href="{{ route('vashi-market.create') }}" class="btn btn-primary text-nowrap">
+                            <i class="fas fa-plus me-1"></i> Add Bill
+                        </a>
+                    </div>
+                </div>
+
+                <form id="bill-filters" action="{{ route('vashi-market.index') }}" method="GET"
+                    class="mb-4" @if (! $filtersOpen) hidden @endif>
                     <div class="row g-3 align-items-end">
                         <div class="col-12 col-lg-4">
                             <label for="search-input" class="form-label">Search</label>
@@ -406,16 +489,27 @@
                         </div>
                         <div class="col-6 col-lg-2">
                             <label for="start_date" class="form-label">Start Date</label>
-                            <input type="date" name="start_date" id="start_date" class="form-control"
-                                value="{{ request('start_date') }}">
+                            @include('admin.partials.ddmmyyyy-date', [
+                                'id' => 'start_date',
+                                'name' => 'start_date',
+                                'value' => request('start_date'),
+                                'overlay' => true,
+                            ])
                         </div>
                         <div class="col-6 col-lg-2">
                             <label for="end_date" class="form-label">End Date</label>
-                            <input type="date" name="end_date" id="end_date" class="form-control"
-                                value="{{ request('end_date') }}">
+                            @include('admin.partials.ddmmyyyy-date', [
+                                'id' => 'end_date',
+                                'name' => 'end_date',
+                                'value' => request('end_date'),
+                                'overlay' => true,
+                            ])
                         </div>
                         <div class="col-6 col-lg-1 d-flex">
-                            <button type="submit" class="btn btn-info w-100"><i class="fas fa-filter"></i></button>
+                            <button type="submit" class="btn btn-info w-100" title="Apply filters">
+                                <i class="fas fa-filter"></i>
+                                <span class="d-lg-none ms-1">Apply</span>
+                            </button>
                         </div>
                         <div class="col-6 col-lg-1 d-flex">
                             <a href="{{ route('vashi-market.index') }}" class="btn btn-outline-secondary w-100"
@@ -426,13 +520,6 @@
                         </div>
                     </div>
                 </form>
-                <div class="d-flex justify-content-end gap-2 mb-4 flex-wrap">
-                    <a href="{{ route('vashi-market.payments.create') }}" class="btn btn-success text-nowrap">
-                        <i class="fas fa-money-check-alt me-1"></i> Pay Multiple Bills
-                    </a>
-                    <a href="{{ route('vashi-market.create') }}" class="btn btn-primary text-nowrap"><i
-                            class="fas fa-plus me-1"></i> Add Bill</a>
-                </div>
 
                 <div id="data-list" class="d-flex flex-column gap-3" style="max-height: 70vh; overflow-y: auto"
                     data-next-cursor="{{ $bills->nextCursor()?->encode() }}"
@@ -469,7 +556,19 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const searchInput = document.getElementById('search-input');
-            const filterForm = searchInput.closest('form');
+            const filterForm = document.getElementById('bill-filters');
+            const toggleFilters = document.getElementById('toggle-filters');
+
+            toggleFilters.addEventListener('click', function () {
+                const willOpen = filterForm.hidden;
+                filterForm.hidden = !willOpen;
+                toggleFilters.classList.toggle('is-open', willOpen);
+                toggleFilters.setAttribute('aria-expanded', String(willOpen));
+
+                if (willOpen) {
+                    searchInput.focus();
+                }
+            });
             const paymentStatusInput = document.getElementById('payment_status');
             const startDateInput = document.getElementById('start_date');
             const endDateInput = document.getElementById('end_date');

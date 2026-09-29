@@ -402,11 +402,21 @@
                         <div class="row g-3">
                             <div class="col-md-6 col-lg-4">
                                 <label for="bill-date" class="form-label">Bill Date</label>
-                                <input type="date" class="form-control" id="bill-date" name="bill_date" required />
+                                @include('admin.partials.ddmmyyyy-date', [
+                                    'id' => 'bill-date',
+                                    'name' => 'bill_date',
+                                    'value' => old('bill_date'),
+                                    'required' => true,
+                                ])
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="received-date" class="form-label">Received Date</label>
-                                <input type="date" class="form-control" id="received-date" name="received_date" required />
+                                @include('admin.partials.ddmmyyyy-date', [
+                                    'id' => 'received-date',
+                                    'name' => 'received_date',
+                                    'value' => old('received_date'),
+                                    'required' => true,
+                                ])
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="bill-no" class="form-label">Bill No</label>
@@ -490,7 +500,11 @@
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="paid-date" class="form-label">Paid Date</label>
-                                <input type="date" class="form-control" id="paid-date" name="paid_date" />
+                                @include('admin.partials.ddmmyyyy-date', [
+                                    'id' => 'paid-date',
+                                    'name' => 'paid_date',
+                                    'value' => old('paid_date'),
+                                ])
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="paid-amount" class="form-label">Paid Amount</label>
