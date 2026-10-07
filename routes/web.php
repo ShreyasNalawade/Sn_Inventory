@@ -50,6 +50,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/vashi-market/payments/create', [VashiMarketPaymentController::class, 'create'])->name('vashi-market.payments.create');
     Route::post('/vashi-market/payments', [VashiMarketPaymentController::class, 'store'])->name('vashi-market.payments.store');
     Route::get('/vashi-market/payments/unpaid-bills', [VashiMarketPaymentController::class, 'unpaidBills'])->name('vashi-market.payments.unpaid-bills');
+    Route::get('/vashi-market/payments/paid-bills', [VashiMarketPaymentController::class, 'paidBills'])->name('vashi-market.payments.paid-bills');
     Route::get('/vashi-market/{id}/edit', [VashiMarketController::class, 'editVashiBill'])->name('vashi-market.edit');
     Route::put('/vashi-market/{id}', [VashiMarketController::class, 'updateVashiBill'])->name('vashi-market.update');
     Route::get('vashi-market/{vashiMarketBill}/payment', [VashiMarketController::class, 'showPaymentForm'])->name('vashi-market.payment.form');

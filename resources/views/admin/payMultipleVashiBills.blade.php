@@ -122,6 +122,65 @@
             box-shadow: 0 6px 18px rgba(22, 163, 74, 0.12);
         }
 
+        .bill-row.is-paid {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+        }
+
+        .paid-bills-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            min-height: 46px;
+            margin-top: 0.35rem;
+            border: 1.5px solid #fdba74;
+            border-radius: 0.85rem;
+            background: #fff7ed;
+            color: #9a3412;
+            font-weight: 800;
+        }
+
+        .paid-bills-panel {
+            display: none;
+            margin-top: 0.9rem;
+        }
+
+        .paid-bills-panel.is-open {
+            display: block;
+        }
+
+        .paid-bills-status {
+            text-align: center;
+            color: #64748b;
+            padding: 0.75rem 0;
+            font-weight: 600;
+        }
+
+        .paid-status-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 28px;
+            margin-top: 0.1rem;
+            border-radius: 0.55rem;
+            background: #16a34a;
+            color: #fff;
+            font-size: 0.75rem;
+        }
+
+        .bill-paid-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem 0.75rem;
+            margin-top: 0.55rem;
+            font-size: 0.8rem;
+            color: #475569;
+            font-weight: 700;
+        }
+
         .bill-select-toggle {
             display: flex;
             align-items: flex-start;
@@ -387,9 +446,10 @@
 
                 @if ($partyName === '')
                     <div class="text-muted text-center py-4">Select a party to load unpaid bills.</div>
-                @elseif ($bills->isEmpty())
-                    <div class="text-muted text-center py-4">No unpaid bills found for this party.</div>
                 @else
+                    @if ($bills->isEmpty())
+                        <div class="text-muted text-center py-4">No unpaid bills found for this party.</div>
+                    @else
                     <form id="group-payment-form" method="POST" action="{{ route('vashi-market.payments.store') }}">
                         @csrf
                         <input type="hidden" name="party_name" value="{{ $partyName }}">
@@ -482,7 +542,7 @@
                                     @php
                                         $products = $bill->products->pluck('product_name')->implode(', ');
                                     @endphp
-                                    <div class="bill-row" data-bill-id="{{ $bill->id }}"
+                                    <div class="bill-row unpaid-bill-row" data-bill-id="{{ $bill->id }}"
                                         data-bill-amount="{{ (float) $bill->total_bill_amount }}">
                                         <input type="checkbox" class="bill-checkbox" value="{{ $bill->id }}" tabindex="-1">
                                         <input type="hidden" class="bill-id-input" disabled
@@ -540,12 +600,39 @@
                             </div>
                         </div>
 
+                        <div class="paid-bills-section mb-4" data-party-name="{{ $partyName }}"
+                            data-paid-url="{{ route('vashi-market.payments.paid-bills') }}">
+                            <button type="button" class="paid-bills-toggle" id="toggle-paid-bills">
+                                <i class="fas fa-receipt"></i>
+                                <span>Paid Bills</span>
+                            </button>
+                            <div class="paid-bills-panel" id="paid-bills-panel">
+                                <div class="paid-bills-status" id="paid-bills-status">Loading paid bills…</div>
+                                <div class="bill-pick-list" id="paid-bills-list"></div>
+                            </div>
+                        </div>
+
                         <div class="d-grid save-payment-wrap">
                             <button type="submit" id="save-payment-btn" class="btn btn-primary" disabled>
                                 <i class="fas fa-save me-1"></i> Save Group Payment
                             </button>
                         </div>
                     </form>
+                    @endif
+
+                    @if ($bills->isEmpty())
+                        <div class="paid-bills-section mt-4" data-party-name="{{ $partyName }}"
+                            data-paid-url="{{ route('vashi-market.payments.paid-bills') }}">
+                            <button type="button" class="paid-bills-toggle" id="toggle-paid-bills">
+                                <i class="fas fa-receipt"></i>
+                                <span>Paid Bills</span>
+                            </button>
+                            <div class="paid-bills-panel" id="paid-bills-panel">
+                                <div class="paid-bills-status" id="paid-bills-status">Loading paid bills…</div>
+                                <div class="bill-pick-list" id="paid-bills-list"></div>
+                            </div>
+                        </div>
+                    @endif
                 @endif
             </div>
         </div>
@@ -555,6 +642,120 @@
 @section('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const formatMoney = (amount) => `₹${Number(amount || 0).toFixed(2)}`;
+            const escapeHtml = (value) => String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+
+            const paidSection = document.querySelector('.paid-bills-section');
+            const paidToggle = document.getElementById('toggle-paid-bills');
+            const paidPanel = document.getElementById('paid-bills-panel');
+            const paidStatus = document.getElementById('paid-bills-status');
+            const paidList = document.getElementById('paid-bills-list');
+            let paidLoaded = false;
+
+            const renderPaidBills = (bills) => {
+                if (!bills.length) {
+                    paidList.innerHTML = '';
+                    paidStatus.textContent = 'No paid bills found for this party.';
+                    paidStatus.style.display = 'block';
+                    return;
+                }
+
+                paidStatus.style.display = 'none';
+                paidList.innerHTML = bills.map((bill) => {
+                    const interest = Number(bill.payment_difference || 0);
+                    let interestText = '₹0.00';
+                    if (interest > 0) {
+                        interestText = `+₹${Math.abs(interest).toFixed(2)}`;
+                    } else if (interest < 0) {
+                        interestText = `-₹${Math.abs(interest).toFixed(2)}`;
+                    }
+
+                    const paidDate = bill.paid_date_display
+                        ? `<span><i class="fas fa-check-circle me-1"></i>Paid ${escapeHtml(bill.paid_date_display)}</span>`
+                        : '';
+                    const paymentType = bill.payment_type
+                        ? `<span>${escapeHtml(bill.payment_type)}</span>`
+                        : '';
+
+                    return `
+                        <div class="bill-row is-paid">
+                            <div class="bill-select-toggle" style="cursor: default;">
+                                <span class="paid-status-chip" aria-hidden="true">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                <span class="bill-select-main">
+                                    <span class="bill-select-top">
+                                        <span>
+                                            <span class="bill-no-text">Bill #${escapeHtml(bill.bill_no)}</span>
+                                            <span class="bill-date-text">
+                                                <i class="fas fa-calendar-alt me-1"></i>
+                                                ${escapeHtml(bill.bill_date_display)}
+                                            </span>
+                                        </span>
+                                        <span class="bill-amount-chip">
+                                            <span class="chip-label">Paid Amount</span>
+                                            <span class="chip-value">${formatMoney(bill.paid_amount)}</span>
+                                        </span>
+                                    </span>
+                                    <span class="bill-products-text">
+                                        <i class="fas fa-box me-1 text-muted"></i>
+                                        ${escapeHtml(bill.products || 'No products')}
+                                    </span>
+                                    <span class="bill-paid-meta">
+                                        <span>Bill ${formatMoney(bill.total_bill_amount)}</span>
+                                        <span>Interest ${interestText}</span>
+                                        ${paymentType}
+                                        ${paidDate}
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            };
+
+            paidToggle?.addEventListener('click', async () => {
+                const willOpen = !paidPanel.classList.contains('is-open');
+                paidPanel.classList.toggle('is-open', willOpen);
+                const label = paidToggle.querySelector('span');
+                if (label) {
+                    label.textContent = willOpen ? 'Hide Paid Bills' : 'Paid Bills';
+                }
+
+                if (!willOpen || paidLoaded || !paidSection) {
+                    return;
+                }
+
+                paidStatus.style.display = 'block';
+                paidStatus.textContent = 'Loading paid bills…';
+                paidList.innerHTML = '';
+
+                try {
+                    const url = new URL(paidSection.dataset.paidUrl, window.location.origin);
+                    url.searchParams.set('party_name', paidSection.dataset.partyName || '');
+                    const response = await fetch(url.toString(), {
+                        headers: {
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to load paid bills');
+                    }
+
+                    const data = await response.json();
+                    paidLoaded = true;
+                    renderPaidBills(data.bills || []);
+                } catch (error) {
+                    paidStatus.textContent = 'Unable to load paid bills.';
+                }
+            });
+
             const paymentType = document.getElementById('payment_type');
             const transactionWrap = document.getElementById('transaction-id-wrap');
             const chequeWrap = document.getElementById('cheque-no-wrap');
@@ -567,8 +768,6 @@
                 return;
             }
 
-            const formatMoney = (amount) => `₹${Number(amount || 0).toFixed(2)}`;
-
             const updatePaymentTypeFields = () => {
                 const value = paymentType.value;
                 transactionWrap.style.display = (value === 'Gpay' || value === 'Account Transfer') ? 'block' : 'none';
@@ -576,7 +775,7 @@
             };
 
             const getSelectedRows = () => {
-                return Array.from(document.querySelectorAll('.bill-row')).filter((row) => {
+                return Array.from(document.querySelectorAll('.unpaid-bill-row')).filter((row) => {
                     return row.querySelector('.bill-checkbox').checked;
                 });
             };
@@ -609,7 +808,7 @@
             };
 
             const updateSelectAllLabel = () => {
-                const allRows = document.querySelectorAll('.bill-row');
+                const allRows = document.querySelectorAll('.unpaid-bill-row');
                 const selectedCount = getSelectedRows().length;
                 const label = document.getElementById('select-all-label');
                 if (!label) {
@@ -711,7 +910,7 @@
             });
 
             selectAll?.addEventListener('click', () => {
-                const allRows = Array.from(document.querySelectorAll('.bill-row'));
+                const allRows = Array.from(document.querySelectorAll('.unpaid-bill-row'));
                 const shouldSelectAll = getSelectedRows().length !== allRows.length;
 
                 allRows.forEach((row) => {

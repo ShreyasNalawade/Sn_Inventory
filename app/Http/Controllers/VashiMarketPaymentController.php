@@ -86,6 +86,62 @@ class VashiMarketPaymentController extends Controller
     }
 
     /**
+     * Fetch paid bills for a party (AJAX).
+     */
+    public function paidBills(Request $request)
+    {
+        $partyName = trim((string) $request->input('party_name', ''));
+
+        if ($partyName === '') {
+            return response()->json(['bills' => []]);
+        }
+
+        $bills = VashiMarketBill::query()
+            ->with(['products:id,vashi_market_bill_id,product_name'])
+            ->where('is_paid', true)
+            ->where('party_name', $partyName)
+            ->orderByDesc('paid_date')
+            ->orderByDesc('bill_date')
+            ->orderByDesc('id')
+            ->get([
+                'id',
+                'bill_no',
+                'bill_date',
+                'party_name',
+                'total_bill_amount',
+                'paid_date',
+                'paid_amount',
+                'payment_difference',
+                'payment_type',
+            ])
+            ->map(function (VashiMarketBill $bill) {
+                $billAmount = (float) $bill->total_bill_amount;
+                $paidAmount = (float) ($bill->paid_amount ?? 0);
+                $storedDifference = (float) ($bill->payment_difference ?? 0);
+                $interest = abs($storedDifference) > 0.009
+                    ? $storedDifference
+                    : round($paidAmount - $billAmount, 2);
+
+                return [
+                    'id' => $bill->id,
+                    'bill_no' => $bill->bill_no,
+                    'bill_date_display' => \Carbon\Carbon::parse($bill->bill_date)->format('d/m/Y'),
+                    'paid_date_display' => $bill->paid_date
+                        ? \Carbon\Carbon::parse($bill->paid_date)->format('d/m/Y')
+                        : '',
+                    'party_name' => $bill->party_name,
+                    'total_bill_amount' => $billAmount,
+                    'paid_amount' => $paidAmount,
+                    'payment_difference' => $interest,
+                    'payment_type' => $bill->payment_type ?: '',
+                    'products' => $bill->products->pluck('product_name')->implode(', '),
+                ];
+            });
+
+        return response()->json(['bills' => $bills]);
+    }
+
+    /**
      * Store a group payment and safely update only selected unpaid bills.
      * Existing bill rows are never deleted.
      */
