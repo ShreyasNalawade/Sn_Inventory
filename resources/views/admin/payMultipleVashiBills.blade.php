@@ -424,8 +424,12 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label for="paid_date" class="form-label">Paid Date</label>
-                                    <input type="date" class="form-control" id="paid_date" name="paid_date"
-                                        value="{{ old('paid_date', now()->toDateString()) }}" required>
+                                    @include('admin.partials.ddmmyyyy-date', [
+                                        'id' => 'paid_date',
+                                        'name' => 'paid_date',
+                                        'value' => old('paid_date', now()->toDateString()),
+                                        'required' => true,
+                                    ])
                                 </div>
                                 <div class="col-md-4">
                                     <label for="total_paid_amount" class="form-label">Total Paid Amount</label>
@@ -460,7 +464,7 @@
                                 </div>
                             </div>
                             <div class="mt-3 small" id="allocation-status" class="allocation-ok">
-                                Select bills and enter paid amount to auto-split.
+                                Select bills and enter each paid share. Nothing is auto-filled.
                             </div>
                         </div>
 
@@ -516,7 +520,8 @@
                                                     <label>Paid Share</label>
                                                     <input type="number" step="0.01" min="0"
                                                         class="form-control allocated-input" disabled
-                                                        name="bills[{{ $index }}][allocated_amount]" value="0.00">
+                                                        name="bills[{{ $index }}][allocated_amount]"
+                                                        value="" placeholder="">
                                                 </div>
                                                 <div class="bill-allocation-field">
                                                     <label>Interest / Offer</label>
@@ -590,7 +595,7 @@
                 interestInput.disabled = !enabled;
 
                 if (!enabled) {
-                    allocatedInput.value = '0.00';
+                    allocatedInput.value = '';
                     interestInput.value = '0.00';
                     row.querySelector('.percent-text').textContent = '0.00%';
                     interestInput.classList.remove('positive', 'negative');
@@ -627,44 +632,26 @@
                 }
             };
 
-            const applyProportionalSplit = () => {
-                const selectedRows = getSelectedRows();
-                const totalPaid = parseFloat(totalPaidInput.value) || 0;
-                const billsTotal = selectedRows.reduce((sum, row) => sum + (parseFloat(row.dataset.billAmount) || 0), 0);
+            const syncInterestFromPaidShare = (row) => {
+                const allocatedInput = row.querySelector('.allocated-input');
+                const interestInput = row.querySelector('.interest-input');
+                const rawAllocated = (allocatedInput.value || '').trim();
 
-                if (!selectedRows.length || billsTotal <= 0 || totalPaid <= 0) {
-                    selectedRows.forEach((row) => {
-                        row.querySelector('.allocated-input').value = '0.00';
-                        row.querySelector('.interest-input').value = '0.00';
-                        row.querySelector('.percent-text').textContent = '0.00%';
-                    });
-                    refreshSummary();
+                if (rawAllocated === '') {
+                    interestInput.value = '0.00';
+                    row.querySelector('.percent-text').textContent = '0.00%';
+                    interestInput.classList.remove('positive', 'negative');
                     return;
                 }
 
-                let allocatedRunning = 0;
+                const billAmount = parseFloat(row.dataset.billAmount) || 0;
+                const allocated = parseFloat(rawAllocated) || 0;
+                const interest = Math.round((allocated - billAmount) * 100) / 100;
+                const percent = billAmount > 0 ? Math.abs(interest) / billAmount * 100 : 0;
 
-                selectedRows.forEach((row, index) => {
-                    const billAmount = parseFloat(row.dataset.billAmount) || 0;
-                    let allocated;
-
-                    if (index === selectedRows.length - 1) {
-                        allocated = Math.round((totalPaid - allocatedRunning) * 100) / 100;
-                    } else {
-                        allocated = Math.round(((billAmount / billsTotal) * totalPaid) * 100) / 100;
-                        allocatedRunning += allocated;
-                    }
-
-                    const interest = Math.round((allocated - billAmount) * 100) / 100;
-                    const percent = billAmount > 0 ? Math.abs(interest) / billAmount * 100 : 0;
-
-                    row.querySelector('.allocated-input').value = allocated.toFixed(2);
-                    row.querySelector('.interest-input').value = interest.toFixed(2);
-                    row.querySelector('.percent-text').textContent = `${percent.toFixed(2)}%`;
-                    updateInterestStyle(row.querySelector('.interest-input'), interest);
-                });
-
-                refreshSummary();
+                interestInput.value = interest.toFixed(2);
+                row.querySelector('.percent-text').textContent = `${percent.toFixed(2)}%`;
+                updateInterestStyle(interestInput, interest);
             };
 
             const refreshSummary = () => {
@@ -719,7 +706,7 @@
                     const row = toggleBtn.closest('.bill-row');
                     const checkbox = row.querySelector('.bill-checkbox');
                     setRowEnabled(row, !checkbox.checked);
-                    applyProportionalSplit();
+                    refreshSummary();
                 });
             });
 
@@ -730,23 +717,15 @@
                 allRows.forEach((row) => {
                     setRowEnabled(row, shouldSelectAll);
                 });
-                applyProportionalSplit();
+                refreshSummary();
             });
 
-            totalPaidInput?.addEventListener('input', applyProportionalSplit);
+            totalPaidInput?.addEventListener('input', refreshSummary);
             paymentType?.addEventListener('change', updatePaymentTypeFields);
 
             document.querySelectorAll('.allocated-input').forEach((input) => {
                 input.addEventListener('input', () => {
-                    const row = input.closest('.bill-row');
-                    const billAmount = parseFloat(row.dataset.billAmount) || 0;
-                    const allocated = parseFloat(input.value) || 0;
-                    const interest = Math.round((allocated - billAmount) * 100) / 100;
-                    const percent = billAmount > 0 ? Math.abs(interest) / billAmount * 100 : 0;
-
-                    row.querySelector('.interest-input').value = interest.toFixed(2);
-                    row.querySelector('.percent-text').textContent = `${percent.toFixed(2)}%`;
-                    updateInterestStyle(row.querySelector('.interest-input'), interest);
+                    syncInterestFromPaidShare(input.closest('.bill-row'));
                     refreshSummary();
                 });
             });
@@ -758,48 +737,10 @@
                     const interest = parseFloat(input.value) || 0;
                     const allocated = Math.round((billAmount + interest) * 100) / 100;
                     const percent = billAmount > 0 ? Math.abs(interest) / billAmount * 100 : 0;
-                    const totalPaid = parseFloat(totalPaidInput.value) || 0;
 
                     row.querySelector('.allocated-input').value = allocated.toFixed(2);
                     row.querySelector('.percent-text').textContent = `${percent.toFixed(2)}%`;
                     updateInterestStyle(input, interest);
-
-                    // Keep total paid fixed: redistribute remaining amount across other selected bills.
-                    const selectedRows = getSelectedRows();
-                    const otherRows = selectedRows.filter((item) => item !== row);
-
-                    if (otherRows.length && totalPaid > 0) {
-                        const remainingPaid = Math.round((totalPaid - allocated) * 100) / 100;
-                        const otherBillsTotal = otherRows.reduce((sum, item) => {
-                            return sum + (parseFloat(item.dataset.billAmount) || 0);
-                        }, 0);
-
-                        let running = 0;
-                        otherRows.forEach((otherRow, index) => {
-                            const otherBillAmount = parseFloat(otherRow.dataset.billAmount) || 0;
-                            let otherAllocated;
-
-                            if (index === otherRows.length - 1) {
-                                otherAllocated = Math.round((remainingPaid - running) * 100) / 100;
-                            } else if (otherBillsTotal > 0) {
-                                otherAllocated = Math.round(((otherBillAmount / otherBillsTotal) * remainingPaid) * 100) / 100;
-                                running += otherAllocated;
-                            } else {
-                                otherAllocated = 0;
-                            }
-
-                            const otherInterest = Math.round((otherAllocated - otherBillAmount) * 100) / 100;
-                            const otherPercent = otherBillAmount > 0
-                                ? Math.abs(otherInterest) / otherBillAmount * 100
-                                : 0;
-
-                            otherRow.querySelector('.allocated-input').value = otherAllocated.toFixed(2);
-                            otherRow.querySelector('.interest-input').value = otherInterest.toFixed(2);
-                            otherRow.querySelector('.percent-text').textContent = `${otherPercent.toFixed(2)}%`;
-                            updateInterestStyle(otherRow.querySelector('.interest-input'), otherInterest);
-                        });
-                    }
-
                     refreshSummary();
                 });
             });
