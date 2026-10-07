@@ -36,7 +36,9 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="sidebar-link" href="dailyCollections.html">
+            <a class="sidebar-link {{ request()->routeIs('admin.daily-report') ? 'active' : '' }}"
+                href="{{ route('admin.daily-report') }}"
+                @if (request()->routeIs('admin.daily-report')) aria-current="page" @endif>
                 <i class="fas fa-chart-line" aria-hidden="true"></i>
                 <span class="sidebar-link-label">Daily Report</span>
             </a>

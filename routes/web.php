@@ -6,6 +6,7 @@ use App\Http\Controllers\ProductListController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VashiMarketController;
 use App\Http\Controllers\VashiMarketPaymentController;
+use App\Http\Controllers\VashiMarketReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -41,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/products/{product}', [ProductListController::class, 'update'])->name('admin.product.update');
 
     // Vashi Market Routes
+    Route::get('/daily-report', [VashiMarketReportController::class, 'index'])->name('admin.daily-report');
     Route::get('/vashi-market/bills', [VashiMarketController::class, 'index'])->name('vashi-market.index');
     Route::get('/vashi-market/bills/create', [VashiMarketController::class, 'create'])->name('vashi-market.create');
     Route::get('/vashi-market/suggestions', [VashiMarketController::class, 'suggestions'])->name('vashi-market.suggestions');
