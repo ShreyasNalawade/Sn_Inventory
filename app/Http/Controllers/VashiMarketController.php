@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\VashiMarketBill;
 use App\Models\VashiMarketBillProduct;
+use App\Models\VashiMarketPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -386,5 +387,52 @@ class VashiMarketController extends Controller
         ]);
 
         return view('admin.showVashiMarketBill', ['bill' => $vashiMarketBill]);
+    }
+
+    public function destroy(VashiMarketBill $vashiMarketBill)
+    {
+        $billNo = $vashiMarketBill->bill_no;
+        $partyName = $vashiMarketBill->party_name;
+
+        try {
+            DB::transaction(function () use ($vashiMarketBill) {
+                $paymentIds = $vashiMarketBill->paymentAllocations()
+                    ->pluck('vashi_market_payment_id')
+                    ->unique()
+                    ->values();
+
+                $vashiMarketBill->paymentAllocations()->delete();
+
+                foreach ($paymentIds as $paymentId) {
+                    $payment = VashiMarketPayment::query()->lockForUpdate()->find($paymentId);
+                    if (! $payment) {
+                        continue;
+                    }
+
+                    $remaining = $payment->allocations()->get();
+                    if ($remaining->isEmpty()) {
+                        $payment->delete();
+                        continue;
+                    }
+
+                    $billsAmount = round($remaining->sum(fn ($row) => (float) $row->bill_amount), 2);
+                    $paidAmount = round($remaining->sum(fn ($row) => (float) $row->allocated_amount), 2);
+                    $payment->update([
+                        'total_bills_amount' => $billsAmount,
+                        'total_paid_amount' => $paidAmount,
+                        'total_difference' => round($paidAmount - $billsAmount, 2),
+                    ]);
+                }
+
+                $vashiMarketBill->products()->delete();
+                $vashiMarketBill->delete();
+            });
+        } catch (\Throwable $e) {
+            return back()->with('error', 'This bill could not be deleted.');
+        }
+
+        return redirect()
+            ->route('vashi-market.index')
+            ->with('success', "Bill #{$billNo} for {$partyName} was deleted.");
     }
 }

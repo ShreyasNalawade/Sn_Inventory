@@ -55,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/vashi-market/{id}', [VashiMarketController::class, 'updateVashiBill'])->name('vashi-market.update');
     Route::get('vashi-market/{vashiMarketBill}/payment', [VashiMarketController::class, 'showPaymentForm'])->name('vashi-market.payment.form');
     Route::get('vashi-market/details/{vashiMarketBill}', [VashiMarketController::class, 'showBillDetails'])->name('vashi-market.showBillDetails');
+    Route::delete('vashi-market/details/{vashiMarketBill}', [VashiMarketController::class, 'destroy'])->name('vashi-market.destroy');
 
     Route::get('/ai-chat', [AiChatController::class, 'index'])->name('admin.ai-chat');
     Route::post('/ai-chat/ask', [AiChatController::class, 'ask'])

@@ -17,6 +17,13 @@
             .bill-detail-desktop .table-responsive table {
                 min-width: 800px;
             }
+
+            .bill-detail-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                align-items: center;
+            }
         }
 
         @media (max-width: 991.98px) {
@@ -42,6 +49,10 @@
                 width: 100%;
                 margin: 0 !important;
                 white-space: nowrap;
+            }
+
+            .bill-detail-actions .delete-bill-btn {
+                grid-column: 1 / -1;
             }
 
             .bill-section + .bill-section {
@@ -374,12 +385,23 @@
                         class="btn btn-outline-success btn-sm mb-1 mb-md-0">
                         <i class="fas fa-money-check-alt me-1"></i> Pay Multiple Bills
                     </a>
+
+                    <button type="button" id="delete-bill-btn" class="btn btn-outline-danger btn-sm delete-bill-btn mb-1 mb-md-0">
+                        <i class="fas fa-trash-alt me-1"></i> Delete
+                    </button>
                 </div>
+                <form id="delete-bill-form" action="{{ route('vashi-market.destroy', $bill) }}" method="POST" class="d-none">
+                    @csrf
+                    @method('DELETE')
+                </form>
             </div>
 
             <div class="card-body">
                 @if(session('success'))
                     <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
+                @if(session('error'))
+                    <div class="alert alert-danger">{{ session('error') }}</div>
                 @endif
 
                 <div class="bill-detail-mobile d-lg-none">
@@ -715,4 +737,82 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+    @php
+        $deleteBill = [
+            'number' => $bill->bill_no,
+            'party' => $bill->party_name,
+            'date' => \Carbon\Carbon::parse($bill->bill_date)->format('d M Y'),
+            'received' => \Carbon\Carbon::parse($bill->received_date)->format('d M Y'),
+            'dalal' => $bill->dalal,
+            'transport' => $bill->transport_name,
+            'amount' => '₹' . number_format($totalBillAmount, 2),
+            'status' => $bill->is_paid ? 'Paid' : 'Unpaid',
+            'products' => $bill->products->count(),
+            'groupPayment' => $bill->paymentAllocations->isNotEmpty(),
+        ];
+    @endphp
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const deleteButton = document.getElementById("delete-bill-btn");
+            const deleteForm = document.getElementById("delete-bill-form");
+            if (!deleteButton || !deleteForm) {
+                return;
+            }
+
+            const bill = @json($deleteBill);
+
+            const escapeHtml = (value) => String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+
+            const detailRow = (label, value) => `
+                <div style="display:flex;justify-content:space-between;gap:1rem;padding:0.4rem 0;border-bottom:1px solid #e5e7eb;">
+                    <span style="color:#64748b;">${escapeHtml(label)}</span>
+                    <strong style="text-align:right;">${escapeHtml(value)}</strong>
+                </div>`;
+
+            deleteButton.addEventListener("click", () => {
+                const groupNote = bill.groupPayment
+                    ? `<p class="mb-0 mt-2">This bill is part of a group payment. It will be removed from that payment, and the remaining payment totals will be updated.</p>`
+                    : "";
+
+                Swal.fire({
+                    title: "Delete this bill?",
+                    html: `
+                        <div class="text-start">
+                            ${detailRow("Bill No", bill.number)}
+                            ${detailRow("Party", bill.party)}
+                            ${detailRow("Bill Date", bill.date)}
+                            ${detailRow("Received", bill.received)}
+                            ${detailRow("Dalal", bill.dalal)}
+                            ${detailRow("Transport", bill.transport)}
+                            ${detailRow("Amount", bill.amount)}
+                            ${detailRow("Status", bill.status)}
+                            ${detailRow("Products", bill.products)}
+                            <p class="mt-3 mb-0">The bill and its products will be removed. This cannot be undone.</p>
+                            ${groupNote}
+                        </div>`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    focusCancel: true,
+                    confirmButtonText: "Yes, delete bill",
+                    cancelButtonText: "Cancel",
+                    confirmButtonColor: "#dc3545",
+                    cancelButtonColor: "#6c757d",
+                }).then((result) => {
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+
+                    deleteButton.disabled = true;
+                    deleteForm.submit();
+                });
+            });
+        });
+    </script>
 @endsection
