@@ -7,6 +7,7 @@ use App\Models\VashiMarketBillProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class VashiMarketController extends Controller
 {
@@ -211,7 +212,12 @@ class VashiMarketController extends Controller
         $validator = Validator::make($request->all(), [
             'bill_date' => 'required|date',
             'received_date' => 'required|date',
-            'bill_no' => 'required|string|unique:vashi_market_bills,bill_no',
+            'bill_no' => [
+                'required',
+                'string',
+                Rule::unique('vashi_market_bills', 'bill_no')
+                    ->where(fn ($query) => $query->where('party_name', $request->input('party_name'))),
+            ],
             'party_name' => 'required|string|max:255',
             'dalal' => 'required|string|max:255',
             'transport_name' => 'required|string|max:255',
@@ -232,11 +238,12 @@ class VashiMarketController extends Controller
             'products.*.total_kg' => 'required|numeric',
             'products.*.rate' => 'required|numeric',
             'products.*.product_amount' => 'required|numeric',
+        ], [
+            'bill_no.unique' => 'This bill number is already used for this party.',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
-            // return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
@@ -293,6 +300,13 @@ class VashiMarketController extends Controller
         $validator = Validator::make($request->all(), [
             'bill_date' => 'required|date',
             'received_date' => 'required|date',
+            'bill_no' => [
+                'required',
+                'string',
+                Rule::unique('vashi_market_bills', 'bill_no')
+                    ->where(fn ($query) => $query->where('party_name', $request->input('party_name')))
+                    ->ignore($bill->id),
+            ],
             'party_name' => 'required|string|max:255',
             'dalal' => 'required|string|max:255',
             'transport_name' => 'required|string|max:255',
@@ -313,6 +327,8 @@ class VashiMarketController extends Controller
             'products.*.total_kg' => 'required|numeric',
             'products.*.rate' => 'required|numeric',
             'products.*.product_amount' => 'required|numeric',
+        ], [
+            'bill_no.unique' => 'This bill number is already used for this party.',
         ]);
 
         if ($validator->fails()) {

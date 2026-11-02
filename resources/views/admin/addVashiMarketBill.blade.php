@@ -369,31 +369,6 @@
                     <i class="fas fa-arrow-left me-1"></i> Back
                 </a>
 
-                {{-- Display Validation Errors --}}
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                {{-- Display Success Message --}}
-                @if (session('success'))
-                    <div class="alert alert-success">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                {{-- Display Error Message --}}
-                @if (session('error'))
-                    <div class="alert alert-danger">
-                        {{ session('error') }}
-                    </div>
-                @endif
-
                 <form id="bill-form" action="{{ route('vashi-market.store') }}" method="POST"> {{-- Example route
                     --}}
                     @csrf
@@ -420,21 +395,23 @@
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="bill-no" class="form-label">Bill No</label>
-                                <input type="text" class="form-control" id="bill-no" name="bill_no" required />
+                                <input type="text" class="form-control" id="bill-no" name="bill_no"
+                                    value="{{ old('bill_no') }}" required />
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="party-name" class="form-label">Party Name</label>
                                 <input type="text" class="form-control js-suggest" id="party-name" name="party_name"
-                                    data-suggest="party_name" autocomplete="off" required />
+                                    data-suggest="party_name" value="{{ old('party_name') }}" autocomplete="off" required />
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="dalal" class="form-label">Dalal</label>
-                                <input type="text" class="form-control" id="dalal" name="dalal" required />
+                                <input type="text" class="form-control" id="dalal" name="dalal"
+                                    value="{{ old('dalal') }}" required />
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="transport-name" class="form-label">Transport Name</label>
                                 <input type="text" class="form-control" id="transport-name" name="transport_name"
-                                    required />
+                                    value="{{ old('transport_name') }}" required />
                             </div>
                         </div>
                     </div>
@@ -463,13 +440,14 @@
                             <div class="col-md-6 col-lg-4">
                                 <label for="total-bill-amount" class="form-label">Total Bill Amount</label>
                                 <input type="number" class="form-control" id="total-bill-amount" name="total_bill_amount"
-                                    step="0.001" required />
+                                    value="{{ old('total_bill_amount') }}" step="0.001" required />
                             </div>
                         </div>
                     </div>
 
                     <div class="form-check form-switch mb-4">
-                        <input class="form-check-input" type="checkbox" id="paid-switch" name="is_paid" value="1" />
+                        <input class="form-check-input" type="checkbox" id="paid-switch" name="is_paid" value="1"
+                            @checked(old('is_paid')) />
                         <label class="form-check-label" for="paid-switch">Mark as Paid</label>
                     </div>
 
@@ -480,23 +458,26 @@
                                 <label for="payment-type" class="form-label">Type of Payment</label>
                                 <select class="form-select" id="payment-type" name="payment_type">
                                     <option value="">Select Payment Type</option>
-                                    <option value="Gpay">Gpay</option>
-                                    <option value="Cheque">Cheque</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Account Transfer">Account Transfer</option>
+                                    <option value="Gpay" @selected(old('payment_type') === 'Gpay')>Gpay</option>
+                                    <option value="Cheque" @selected(old('payment_type') === 'Cheque')>Cheque</option>
+                                    <option value="Cash" @selected(old('payment_type') === 'Cash')>Cash</option>
+                                    <option value="Account Transfer" @selected(old('payment_type') === 'Account Transfer')>Account Transfer</option>
                                 </select>
                             </div>
                             <div class="col-md-6 col-lg-4 payment-input" id="transaction-id-input">
                                 <label for="transaction-id" class="form-label">Transaction ID</label>
-                                <input type="text" class="form-control" id="transaction-id" name="transaction_id" />
+                                <input type="text" class="form-control" id="transaction-id" name="transaction_id"
+                                    value="{{ old('transaction_id') }}" />
                             </div>
                             <div class="col-md-6 col-lg-4 payment-input" id="cheque-no-input">
                                 <label for="cheque-no" class="form-label">Cheque No</label>
-                                <input type="text" class="form-control" id="cheque-no" name="cheque_no" />
+                                <input type="text" class="form-control" id="cheque-no" name="cheque_no"
+                                    value="{{ old('cheque_no') }}" />
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="receipt-no" class="form-label">Receipt Number</label>
-                                <input type="text" class="form-control" id="receipt-no" name="receipt_no" />
+                                <input type="text" class="form-control" id="receipt-no" name="receipt_no"
+                                    value="{{ old('receipt_no') }}" />
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="paid-date" class="form-label">Paid Date</label>
@@ -508,7 +489,8 @@
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="paid-amount" class="form-label">Paid Amount</label>
-                                <input type="number" class="form-control" id="paid-amount" name="paid_amount" step="0.01" />
+                                <input type="number" class="form-control" id="paid-amount" name="paid_amount"
+                                    value="{{ old('paid_amount') }}" step="0.01" />
                             </div>
                             <div class="col-12">
                                 <div class="payment-difference-card">
@@ -517,7 +499,7 @@
                                             <label for="payment-difference" class="form-label">Interest / Offer Difference</label>
                                             <input type="number" class="form-control difference-even"
                                                 id="payment-difference" name="payment_difference" step="0.01"
-                                                value="0.00" />
+                                                value="{{ old('payment_difference', '0.00') }}" />
                                         </div>
                                         <div class="col-md-6 col-lg-4">
                                             <label class="form-label">Percentage</label>
@@ -733,6 +715,18 @@
                 }
             });
 
+            if (paymentTypeSelect.value) {
+                paymentTypeSelect.dispatchEvent(new Event("change"));
+            }
+
+            if (totalBillAmountInput.value) {
+                const restoredTotal = parseFloat(totalBillAmountInput.value);
+                const restoredDifference = parseFloat(paymentDifferenceInput.value);
+                if (Number.isFinite(restoredTotal) && Number.isFinite(restoredDifference)) {
+                    updateDifferenceDisplay(restoredDifference, restoredTotal);
+                }
+            }
+
             const renumberProducts = () => {
                 const productItems = document.querySelectorAll("#product-container .product-item");
                 productItems.forEach((item, index) => {
@@ -747,8 +741,8 @@
                 productCountBadge.textContent = productItems.length;
             };
 
-            // Add a new product section
-            const addProduct = () => {
+            // Add a new product section. data restores a row after a failed save.
+            const addProduct = (data = {}) => {
                 const clone = productTemplate.content.cloneNode(true);
                 const productItem = clone.querySelector(".product-item");
                 const numBagsInput = productItem.querySelector(".num-bags");
@@ -756,6 +750,20 @@
                 const totalKgInput = productItem.querySelector(".total-kg");
                 const productRateInput = productItem.querySelector(".product-rate");
                 const productAmountInput = productItem.querySelector(".product-amount");
+
+                const fillProduct = (input, value) => {
+                    if (value !== undefined && value !== null && value !== "") {
+                        input.value = value;
+                    }
+                };
+
+                fillProduct(productItem.querySelector(".product-name"), data.product_name);
+                fillProduct(productItem.querySelector(".brand-name"), data.brand_name);
+                fillProduct(numBagsInput, data.num_bags);
+                fillProduct(bagSizeInput, data.bag_size);
+                fillProduct(totalKgInput, data.total_kg);
+                fillProduct(productRateInput, data.rate);
+                fillProduct(productAmountInput, data.product_amount);
 
                 const calculateProductAmount = () => {
                     const totalKg = parseFloat(totalKgInput.value) || 0;
@@ -780,7 +788,7 @@
                 renumberProducts();
             };
 
-            addProductBtn.addEventListener("click", addProduct);
+            addProductBtn.addEventListener("click", () => addProduct());
 
             const suggestUrl = @json(route('vashi-market.suggestions', [], false));
             const suggestMenu = document.createElement("div");
@@ -956,6 +964,34 @@
             window.addEventListener("resize", positionSuggestMenu);
             window.addEventListener("scroll", positionSuggestMenu, true);
 
+            const escapeHtml = (value) => String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+
+            const formErrors = @json($errors->all());
+            const formError = @json(session('error'));
+            const formSuccess = @json(session('success'));
+            const alertMessages = formErrors.slice();
+
+            if (formError) {
+                alertMessages.push(formError);
+            }
+
+            if (alertMessages.length) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Could not save bill",
+                    html: `<ul class="text-start mb-0">${alertMessages.map((message) => `<li>${escapeHtml(message)}</li>`).join("")}</ul>`,
+                });
+            } else if (formSuccess) {
+                Swal.fire({
+                    icon: "success",
+                    title: formSuccess,
+                });
+            }
+
             // Override form submission to show confirmation first.
             billForm.addEventListener("submit", (e) => {
                 e.preventDefault(); // Stop the form from submitting immediately
@@ -992,8 +1028,12 @@
 
             });
 
-            // Add one product section on initial load
-            addProduct();
+            const oldProducts = @json(old('products', []));
+            if (Array.isArray(oldProducts) && oldProducts.length) {
+                oldProducts.forEach((product) => addProduct(product || {}));
+            } else {
+                addProduct();
+            }
         });
     </script>
 @endsection
